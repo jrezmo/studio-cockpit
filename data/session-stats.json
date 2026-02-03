@@ -1,0 +1,403 @@
+{
+  "sessions": [
+    {
+      "id": "session-stats-session-1",
+      "fingerprint": "midnight-electric|mix-v8",
+      "name": "Midnight Electric - Mix v8",
+      "artist": "Ava Monroe",
+      "project": "Midnight Electric",
+      "path": "/Volumes/Studio/Artists/Ava Monroe/Midnight Electric/Sessions/Midnight Electric Mix v8.ptx",
+      "createdAt": "2026-01-18T21:15:00Z",
+      "updatedAt": "2026-02-01T23:45:00Z",
+      "sampleRate": 48000,
+      "bitDepth": 24,
+      "bpm": 124,
+      "key": "A minor",
+      "durationSeconds": 214,
+      "notes": "Vocal automation passes, parallel drum bus printed.",
+      "tags": [
+        "mix",
+        "album",
+        "v8"
+      ],
+      "tracks": [
+        {
+          "id": "track-1",
+          "name": "Lead Vocal",
+          "type": "audio",
+          "format": "mono",
+          "plugins": [
+            {
+              "name": "UAD LA-2A",
+              "vendor": "Universal Audio",
+              "format": "AAX DSP",
+              "slot": "A",
+              "preset": "Vocal Leveller",
+              "active": true,
+              "pluginId": "universal audio|uad la-2a|aax dsp"
+            },
+            {
+              "name": "FabFilter Pro-Q 3",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "B",
+              "preset": "Vocal Clean",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-q 3|aax native"
+            },
+            {
+              "name": "Soundtoys Decapitator",
+              "vendor": "Soundtoys",
+              "format": "AAX Native",
+              "slot": "C",
+              "preset": "Tubes",
+              "active": true,
+              "pluginId": "soundtoys|soundtoys decapitator|aax native"
+            }
+          ]
+        },
+        {
+          "id": "track-2",
+          "name": "Drum Bus",
+          "type": "aux",
+          "format": "stereo",
+          "plugins": [
+            {
+              "name": "Waves SSL G-Master Buss",
+              "vendor": "Waves",
+              "format": "AAX Native",
+              "slot": "A",
+              "active": true,
+              "pluginId": "waves|waves ssl g-master buss|aax native"
+            },
+            {
+              "name": "FabFilter Pro-Q 3",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "B",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-q 3|aax native"
+            }
+          ]
+        },
+        {
+          "id": "track-3",
+          "name": "Vocal Verb",
+          "type": "aux",
+          "format": "stereo",
+          "plugins": [
+            {
+              "name": "Valhalla VintageVerb",
+              "vendor": "Valhalla DSP",
+              "format": "AAX Native",
+              "slot": "A",
+              "preset": "Bright Plate",
+              "active": true,
+              "pluginId": "valhalla dsp|valhalla vintageverb|aax native"
+            },
+            {
+              "name": "FabFilter Pro-Q 3",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "B",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-q 3|aax native"
+            }
+          ]
+        }
+      ],
+      "plugins": [
+        {
+          "pluginId": "fabfilter|fabfilter pro-q 3|aax native",
+          "name": "FabFilter Pro-Q 3",
+          "vendor": "FabFilter",
+          "format": "AAX Native",
+          "count": 3,
+          "trackCount": 3
+        },
+        {
+          "pluginId": "universal audio|uad la-2a|aax dsp",
+          "name": "UAD LA-2A",
+          "vendor": "Universal Audio",
+          "format": "AAX DSP",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "soundtoys|soundtoys decapitator|aax native",
+          "name": "Soundtoys Decapitator",
+          "vendor": "Soundtoys",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "waves|waves ssl g-master buss|aax native",
+          "name": "Waves SSL G-Master Buss",
+          "vendor": "Waves",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "valhalla dsp|valhalla vintageverb|aax native",
+          "name": "Valhalla VintageVerb",
+          "vendor": "Valhalla DSP",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        }
+      ],
+      "sources": []
+    },
+    {
+      "id": "session-stats-session-2",
+      "fingerprint": "brass-bones|tracking",
+      "name": "Brass & Bones - Tracking Day 03",
+      "artist": "The Velvet Horns",
+      "project": "Brass & Bones",
+      "path": "/Volumes/Studio/Artists/The Velvet Horns/Brass & Bones/Sessions/Tracking Day 03.ptx",
+      "createdAt": "2026-01-28T18:10:00Z",
+      "updatedAt": "2026-02-02T02:15:00Z",
+      "sampleRate": 96000,
+      "bitDepth": 24,
+      "bpm": 98,
+      "key": "D major",
+      "durationSeconds": 342,
+      "notes": "Horn section tracking, minimal processing.",
+      "tags": [
+        "tracking",
+        "brass",
+        "live"
+      ],
+      "tracks": [
+        {
+          "id": "track-4",
+          "name": "Trumpet 1",
+          "type": "audio",
+          "format": "mono",
+          "plugins": [
+            {
+              "name": "FabFilter Pro-Q 3",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "A",
+              "preset": "Tracking High Pass",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-q 3|aax native"
+            },
+            {
+              "name": "UAD 1176LN",
+              "vendor": "Universal Audio",
+              "format": "AAX DSP",
+              "slot": "B",
+              "active": true,
+              "pluginId": "universal audio|uad 1176ln|aax dsp"
+            }
+          ]
+        },
+        {
+          "id": "track-5",
+          "name": "Sax Bus",
+          "type": "aux",
+          "format": "stereo",
+          "plugins": [
+            {
+              "name": "Soundtoys EchoBoy",
+              "vendor": "Soundtoys",
+              "format": "AAX Native",
+              "slot": "A",
+              "preset": "Tape Slap",
+              "active": true,
+              "pluginId": "soundtoys|soundtoys echoboy|aax native"
+            },
+            {
+              "name": "FabFilter Pro-Q 3",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "B",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-q 3|aax native"
+            }
+          ]
+        },
+        {
+          "id": "track-6",
+          "name": "Room Verb",
+          "type": "aux",
+          "format": "stereo",
+          "plugins": [
+            {
+              "name": "Valhalla Room",
+              "vendor": "Valhalla DSP",
+              "format": "AAX Native",
+              "slot": "A",
+              "active": true,
+              "pluginId": "valhalla dsp|valhalla room|aax native"
+            }
+          ]
+        }
+      ],
+      "plugins": [
+        {
+          "pluginId": "fabfilter|fabfilter pro-q 3|aax native",
+          "name": "FabFilter Pro-Q 3",
+          "vendor": "FabFilter",
+          "format": "AAX Native",
+          "count": 2,
+          "trackCount": 2
+        },
+        {
+          "pluginId": "universal audio|uad 1176ln|aax dsp",
+          "name": "UAD 1176LN",
+          "vendor": "Universal Audio",
+          "format": "AAX DSP",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "soundtoys|soundtoys echoboy|aax native",
+          "name": "Soundtoys EchoBoy",
+          "vendor": "Soundtoys",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "valhalla dsp|valhalla room|aax native",
+          "name": "Valhalla Room",
+          "vendor": "Valhalla DSP",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        }
+      ],
+      "sources": []
+    },
+    {
+      "id": "session-stats-session-3",
+      "fingerprint": "low-frequency|master",
+      "name": "Low Frequency - Master Rev 2",
+      "artist": "DJ Kael",
+      "project": "Low Frequency",
+      "path": "/Volumes/Studio/Artists/DJ Kael/Low Frequency/Masters/Master Rev 2.ptx",
+      "createdAt": "2026-01-22T15:30:00Z",
+      "updatedAt": "2026-01-30T03:45:00Z",
+      "sampleRate": 44100,
+      "bitDepth": 32,
+      "bpm": 140,
+      "key": "F minor",
+      "durationSeconds": 198,
+      "notes": "Limiter revisions, low-end translation check.",
+      "tags": [
+        "mastering",
+        "revision"
+      ],
+      "tracks": [
+        {
+          "id": "track-7",
+          "name": "Print",
+          "type": "audio",
+          "format": "stereo",
+          "plugins": [
+            {
+              "name": "iZotope Ozone 11 Maximizer",
+              "vendor": "iZotope",
+              "format": "AAX Native",
+              "slot": "A",
+              "preset": "Modern Loud",
+              "active": true,
+              "pluginId": "izotope|izotope ozone 11 maximizer|aax native"
+            },
+            {
+              "name": "FabFilter Pro-L 2",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "B",
+              "preset": "Transparent",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-l 2|aax native"
+            },
+            {
+              "name": "FabFilter Pro-Q 3",
+              "vendor": "FabFilter",
+              "format": "AAX Native",
+              "slot": "C",
+              "preset": "Master Clean",
+              "active": true,
+              "pluginId": "fabfilter|fabfilter pro-q 3|aax native"
+            }
+          ]
+        },
+        {
+          "id": "track-8",
+          "name": "Metering",
+          "type": "aux",
+          "format": "stereo",
+          "plugins": [
+            {
+              "name": "iZotope Insight 2",
+              "vendor": "iZotope",
+              "format": "AAX Native",
+              "slot": "A",
+              "active": true,
+              "pluginId": "izotope|izotope insight 2|aax native"
+            },
+            {
+              "name": "NUGEN ISL 2",
+              "vendor": "NUGEN Audio",
+              "format": "AAX Native",
+              "slot": "B",
+              "active": true,
+              "pluginId": "nugen audio|nugen isl 2|aax native"
+            }
+          ]
+        }
+      ],
+      "plugins": [
+        {
+          "pluginId": "izotope|izotope ozone 11 maximizer|aax native",
+          "name": "iZotope Ozone 11 Maximizer",
+          "vendor": "iZotope",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "fabfilter|fabfilter pro-l 2|aax native",
+          "name": "FabFilter Pro-L 2",
+          "vendor": "FabFilter",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "fabfilter|fabfilter pro-q 3|aax native",
+          "name": "FabFilter Pro-Q 3",
+          "vendor": "FabFilter",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "izotope|izotope insight 2|aax native",
+          "name": "iZotope Insight 2",
+          "vendor": "iZotope",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        },
+        {
+          "pluginId": "nugen audio|nugen isl 2|aax native",
+          "name": "NUGEN ISL 2",
+          "vendor": "NUGEN Audio",
+          "format": "AAX Native",
+          "count": 1,
+          "trackCount": 1
+        }
+      ],
+      "sources": []
+    }
+  ],
+  "lastIngestedAt": "2026-02-02T08:00:00Z"
+}
