@@ -18,7 +18,7 @@
   </a>
 </p>
 
-Studio Cockpit unifies file ingestion, session launch, stem printing, and studio settings in one desktop interface.
+Studio Cockpit unifies file ingestion, session launch, stem printing, studio settings, plus client and session management in one desktop interface.
 
 Studio workflows are scattered. Studio Cockpit makes them cohesive.
 
@@ -28,6 +28,7 @@ Studio workflows are scattered. Studio Cockpit makes them cohesive.
 
 *   **Unified Dashboard**: Quick access to every panel in one command center.
 *   **Smart Ingest**: Watch folders, apply detection rules, and track ingest history.
+*   **Client and Session Management**: Track clients, projects, session history, tasks, and correspondence.
 *   **Sessions**: Guided launch flow with clear steps and consistent setup.
 *   **Stems**: Standardized filename generator with preview and part selection.
 *   **Mixing Workflow Prep**: Checklist-driven prep with notes.
@@ -48,6 +49,7 @@ Book a demo, request access, or start a pilot build.
 ### Documentation & Marketing
 
 *   **User Guide**: `docs/user-guide.md`
+*   **Client Data Model**: `docs/CRM.md`
 *   **One-Sheet**: `docs/one-sheet.md`
 *   **Ad Copy**: `docs/marketing/ads.md`
 *   **Website Copy**: `docs/website-copy.md`
