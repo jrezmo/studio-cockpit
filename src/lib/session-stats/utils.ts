@@ -1,3 +1,4 @@
+// Utilities for normalizing, aggregating, and searching session stats data.
 import type {
   SessionStatsPluginInstance,
   SessionStatsPluginUsage,
@@ -19,6 +20,7 @@ export function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+/** Build a stable identifier for a plugin based on name/vendor/version/format. */
 export function buildPluginId(
   plugin: Pick<
     SessionStatsPluginInstance,
@@ -32,6 +34,7 @@ export function buildPluginId(
   return parts.length > 0 ? parts.join("|") : lower(name);
 }
 
+/** Normalize a plugin instance by filling in defaults and generating pluginId. */
 export function normalizePluginInstance(
   plugin: SessionStatsPluginInstance
 ): SessionStatsPluginInstance {
@@ -49,6 +52,7 @@ export function normalizePluginInstance(
   };
 }
 
+/** Normalize a track and its plugins with sane defaults. */
 export function normalizeTrack(track: SessionStatsTrack): SessionStatsTrack {
   const plugins = (track.plugins ?? []).map(normalizePluginInstance);
   return {
@@ -62,6 +66,7 @@ export function normalizeTrack(track: SessionStatsTrack): SessionStatsTrack {
   };
 }
 
+/** Derive aggregate plugin usage from normalized tracks. */
 export function deriveSessionPlugins(tracks: SessionStatsTrack[]) {
   const usageMap = new Map<string, SessionStatsPluginUsage>();
 
@@ -96,6 +101,7 @@ export function deriveSessionPlugins(tracks: SessionStatsTrack[]) {
   return Array.from(usageMap.values()).sort((a, b) => b.count - a.count);
 }
 
+/** Normalize a session payload into a complete SessionStatsSession. */
 export function normalizeSession(
   session: Partial<SessionStatsSession>
 ): SessionStatsSession {
@@ -153,6 +159,7 @@ export function normalizeSession(
   };
 }
 
+/** Merge sessions by fingerprint, preferring incoming non-empty fields. */
 export function mergeSessions(
   existing: SessionStatsSession[],
   incoming: SessionStatsSession[]
@@ -179,6 +186,7 @@ export function mergeSessions(
   return Array.from(merged.values());
 }
 
+/** Build a searchable text blob for filtering by keyword. */
 export function buildSearchText(session: SessionStatsSession) {
   const trackNames = session.tracks.map((track) => track.name).join(" ");
   const pluginNames = session.plugins
@@ -198,6 +206,7 @@ export function buildSearchText(session: SessionStatsSession) {
     .toLowerCase();
 }
 
+/** Compute totals for a session (tracks, unique plugins, instances). */
 export function getSessionTotals(session: SessionStatsSession) {
   const trackCount = session.tracks.length;
   const uniquePlugins = session.plugins.length;
@@ -219,6 +228,7 @@ export type PluginAggregate = {
   trackCount: number;
 };
 
+/** Aggregate plugin usage across sessions for summary stats. */
 export function aggregatePlugins(sessions: SessionStatsSession[]) {
   const totals = new Map<string, PluginAggregate>();
 

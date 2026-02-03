@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { seedCrmData } from "@/lib/crm/seed";
 import { seedSessionStatsData } from "@/lib/session-stats/seed";
@@ -14,87 +15,33 @@ import type {
   SessionStatsData,
   SessionStatsSession,
 } from "@/lib/session-stats/types";
+import type {
+  ClientsView,
+  IngestRecord,
+  Panel,
+  Project,
+  ProToolsSessionEvent,
+  Settings,
+  WorkflowStep,
+  WorkflowStepStatus,
+} from "@/lib/types/projects";
 
-export type ProjectStatus = "active" | "mixing" | "review" | "delivered";
-export type IngestStatus = "success" | "pending" | "error";
-export type WorkflowStepStatus = "todo" | "inProgress" | "done";
-export type Panel =
-  | "dashboard"
-  | "clients"
-  | "ingest"
-  | "stems"
-  | "settings"
-  | "protools"
-  | "sessionStats"
-  | "mixingWorkflow";
-export type ClientsView = "logbook" | "board" | "console";
-
-export interface Project {
-  id: string;
-  artistName: string;
-  projectName: string;
-  folderPath: string;
-  sampleRate: number;
-  bpm: number;
-  songCount: number;
-  sizeBytes: number;
-  status: ProjectStatus;
-  updatedAt: string;
-}
-
-export interface IngestRecord {
-  id: string;
-  fileName: string;
-  sourcePath: string;
-  destPath: string;
-  fileType: string;
-  status: IngestStatus;
-  sizeBytes: number;
-  ingestedAt: string;
-}
-
-export interface Settings {
-  downloadsPath: string;
-  artistFoldersPath: string;
-  templatesPath: string;
-  stemsOutputPath: string;
-}
-
-export interface WorkflowStep {
-  id: string;
-  title: string;
-  detail: string;
-  status: WorkflowStepStatus;
-  updatedAt?: string;
-  completedAt?: string;
-  notes?: string;
-}
-
-export interface ProToolsSessionEvent {
-  name: string;
-  location: string;
-  sampleRate?: string;
-  bitDepth?: string;
-  fileType?: string;
-  ioSettings?: string;
-  interleaved?: boolean;
-  createdAt: string;
-}
-
-interface StudioState {
-  // Projects
+type ProjectSlice = {
   projects: Project[];
+};
 
-  // Ingest
+type IngestSlice = {
   ingestHistory: IngestRecord[];
   ingestWatcherActive: boolean;
   setIngestWatcherActive: (active: boolean) => void;
+};
 
-  // Settings
+type SettingsSlice = {
   settings: Settings;
   updateSettings: (settings: Partial<Settings>) => void;
+};
 
-  // Clients / CRM
+type CrmSlice = {
   clients: Client[];
   clientProjects: ClientProject[];
   clientSessions: ClientSession[];
@@ -105,13 +52,15 @@ interface StudioState {
   setCrmData: (data: CrmData) => void;
   clientsView: ClientsView;
   setClientsView: (view: ClientsView) => void;
+};
 
-  // Session Stats
+type SessionStatsSlice = {
   sessionStatsSessions: SessionStatsSession[];
   sessionStatsLastIngestedAt: string | null;
   setSessionStatsData: (data: SessionStatsData) => void;
+};
 
-  // Mixing Workflow
+type WorkflowSlice = {
   mixingWorkflowByProject: Record<string, WorkflowStep[]>;
   activeMixingWorkflowProjectId: string;
   setActiveMixingWorkflowProjectId: (projectId: string) => void;
@@ -126,17 +75,30 @@ interface StudioState {
     notes: string
   ) => void;
   resetMixingWorkflow: (projectId: string) => void;
+};
 
-  // Pro Tools Events
+type ProToolsSlice = {
   lastProToolsSessionCreated: ProToolsSessionEvent | null;
   setLastProToolsSessionCreated: (event: ProToolsSessionEvent) => void;
+};
 
-  // UI
+type UiSlice = {
   activePanel: Panel;
   setActivePanel: (panel: Panel) => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
-}
+};
+
+type StudioState = ProjectSlice &
+  IngestSlice &
+  SettingsSlice &
+  CrmSlice &
+  SessionStatsSlice &
+  WorkflowSlice &
+  ProToolsSlice &
+  UiSlice;
+
+type SliceCreator<Slice> = StateCreator<StudioState, [], [], Slice>;
 
 const mockProjects: Project[] = [
   {
@@ -296,107 +258,139 @@ const createMixingWorkflowSteps = (): WorkflowStep[] => [
 const createMixingWorkflowsByProject = (projects: Project[]) =>
   Object.fromEntries(projects.map((project) => [project.id, createMixingWorkflowSteps()]));
 
+const createProjectSlice: SliceCreator<ProjectSlice> = () => ({
+  projects: mockProjects,
+});
+
+const createIngestSlice: SliceCreator<IngestSlice> = (set) => ({
+  ingestHistory: mockIngestHistory,
+  ingestWatcherActive: true,
+  setIngestWatcherActive: (active) => set({ ingestWatcherActive: active }),
+});
+
+const createSettingsSlice: SliceCreator<SettingsSlice> = (set) => ({
+  settings: {
+    downloadsPath: "~/Downloads",
+    artistFoldersPath: "/Volumes/Studio/Artists",
+    templatesPath: "/Volumes/Studio/Templates",
+    stemsOutputPath: "/Volumes/Studio/Stems",
+  },
+  updateSettings: (partial) =>
+    set((state) => ({ settings: { ...state.settings, ...partial } })),
+});
+
+const createCrmSlice: SliceCreator<CrmSlice> = (set) => ({
+  clients: seedCrmData.clients,
+  clientProjects: seedCrmData.clientProjects,
+  clientSessions: seedCrmData.clientSessions,
+  clientTasks: seedCrmData.clientTasks,
+  clientCorrespondence: seedCrmData.clientCorrespondence,
+  activeClientId: seedCrmData.clients[0]?.id ?? "",
+  setActiveClientId: (clientId) => set({ activeClientId: clientId }),
+  setCrmData: (data) =>
+    set((state) => ({
+      clients: data.clients,
+      clientProjects: data.clientProjects,
+      clientSessions: data.clientSessions,
+      clientTasks: data.clientTasks,
+      clientCorrespondence: data.clientCorrespondence,
+      activeClientId: data.clients.some((client) => client.id === state.activeClientId)
+        ? state.activeClientId
+        : data.clients[0]?.id ?? "",
+    })),
+  clientsView: "logbook",
+  setClientsView: (view) => set({ clientsView: view }),
+});
+
+const createSessionStatsSlice: SliceCreator<SessionStatsSlice> = (set) => ({
+  sessionStatsSessions: seedSessionStatsData.sessions,
+  sessionStatsLastIngestedAt: seedSessionStatsData.lastIngestedAt ?? null,
+  setSessionStatsData: (data) =>
+    set({
+      sessionStatsSessions: data.sessions,
+      sessionStatsLastIngestedAt: data.lastIngestedAt ?? null,
+    }),
+});
+
+const createWorkflowSlice: SliceCreator<WorkflowSlice> = (set) => ({
+  mixingWorkflowByProject: createMixingWorkflowsByProject(mockProjects),
+  activeMixingWorkflowProjectId: mockProjects[0]?.id ?? "",
+  setActiveMixingWorkflowProjectId: (projectId) =>
+    set({ activeMixingWorkflowProjectId: projectId }),
+  setMixingWorkflowStepStatus: (projectId, stepId, status) =>
+    set((state) => {
+      const steps =
+        state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
+      let didChange = false;
+      const nextSteps = steps.map((step) => {
+        if (step.id !== stepId || step.status === status) {
+          return step;
+        }
+        didChange = true;
+        const now = new Date().toISOString();
+        return {
+          ...step,
+          status,
+          updatedAt: now,
+          completedAt: status === "done" ? now : undefined,
+        };
+      });
+      if (!didChange) {
+        return state;
+      }
+      return {
+        mixingWorkflowByProject: {
+          ...state.mixingWorkflowByProject,
+          [projectId]: nextSteps,
+        },
+      };
+    }),
+  setMixingWorkflowStepNotes: (projectId, stepId, notes) =>
+    set((state) => {
+      const steps =
+        state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
+      return {
+        mixingWorkflowByProject: {
+          ...state.mixingWorkflowByProject,
+          [projectId]: steps.map((step) =>
+            step.id === stepId ? { ...step, notes } : step
+          ),
+        },
+      };
+    }),
+  resetMixingWorkflow: (projectId) =>
+    set((state) => ({
+      mixingWorkflowByProject: {
+        ...state.mixingWorkflowByProject,
+        [projectId]: createMixingWorkflowSteps(),
+      },
+    })),
+});
+
+const createProToolsSlice: SliceCreator<ProToolsSlice> = (set) => ({
+  lastProToolsSessionCreated: null,
+  setLastProToolsSessionCreated: (event) =>
+    set({ lastProToolsSessionCreated: event }),
+});
+
+const createUiSlice: SliceCreator<UiSlice> = (set) => ({
+  activePanel: "dashboard",
+  setActivePanel: (panel) => set({ activePanel: panel }),
+  sidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+});
+
 export const useStudioStore = create<StudioState>()(
   persist(
-    (set) => ({
-      projects: mockProjects,
-      ingestHistory: mockIngestHistory,
-      ingestWatcherActive: true,
-      setIngestWatcherActive: (active) => set({ ingestWatcherActive: active }),
-      settings: {
-        downloadsPath: "~/Downloads",
-        artistFoldersPath: "/Volumes/Studio/Artists",
-        templatesPath: "/Volumes/Studio/Templates",
-        stemsOutputPath: "/Volumes/Studio/Stems",
-      },
-      updateSettings: (partial) =>
-        set((state) => ({ settings: { ...state.settings, ...partial } })),
-      clients: seedCrmData.clients,
-      clientProjects: seedCrmData.clientProjects,
-      clientSessions: seedCrmData.clientSessions,
-      clientTasks: seedCrmData.clientTasks,
-      clientCorrespondence: seedCrmData.clientCorrespondence,
-      activeClientId: seedCrmData.clients[0]?.id ?? "",
-      setActiveClientId: (clientId) => set({ activeClientId: clientId }),
-      setCrmData: (data) =>
-        set((state) => ({
-          clients: data.clients,
-          clientProjects: data.clientProjects,
-          clientSessions: data.clientSessions,
-          clientTasks: data.clientTasks,
-          clientCorrespondence: data.clientCorrespondence,
-          activeClientId: data.clients.some((client) => client.id === state.activeClientId)
-            ? state.activeClientId
-            : data.clients[0]?.id ?? "",
-        })),
-      clientsView: "logbook",
-      setClientsView: (view) => set({ clientsView: view }),
-      sessionStatsSessions: seedSessionStatsData.sessions,
-      sessionStatsLastIngestedAt: seedSessionStatsData.lastIngestedAt ?? null,
-      setSessionStatsData: (data) =>
-        set({
-          sessionStatsSessions: data.sessions,
-          sessionStatsLastIngestedAt: data.lastIngestedAt ?? null,
-        }),
-      mixingWorkflowByProject: createMixingWorkflowsByProject(mockProjects),
-      activeMixingWorkflowProjectId: mockProjects[0]?.id ?? "",
-      setActiveMixingWorkflowProjectId: (projectId) =>
-        set({ activeMixingWorkflowProjectId: projectId }),
-      setMixingWorkflowStepStatus: (projectId, stepId, status) =>
-        set((state) => {
-          const steps =
-            state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
-          let didChange = false;
-          const nextSteps = steps.map((step) => {
-            if (step.id !== stepId || step.status === status) {
-              return step;
-            }
-            didChange = true;
-            const now = new Date().toISOString();
-            return {
-              ...step,
-              status,
-              updatedAt: now,
-              completedAt: status === "done" ? now : undefined,
-            };
-          });
-          if (!didChange) {
-            return state;
-          }
-          return {
-            mixingWorkflowByProject: {
-              ...state.mixingWorkflowByProject,
-              [projectId]: nextSteps,
-            },
-          };
-        }),
-      setMixingWorkflowStepNotes: (projectId, stepId, notes) =>
-        set((state) => {
-          const steps =
-            state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
-          return {
-            mixingWorkflowByProject: {
-              ...state.mixingWorkflowByProject,
-              [projectId]: steps.map((step) =>
-                step.id === stepId ? { ...step, notes } : step
-              ),
-            },
-          };
-        }),
-      resetMixingWorkflow: (projectId) =>
-        set((state) => ({
-          mixingWorkflowByProject: {
-            ...state.mixingWorkflowByProject,
-            [projectId]: createMixingWorkflowSteps(),
-          },
-        })),
-      lastProToolsSessionCreated: null,
-      setLastProToolsSessionCreated: (event) =>
-        set({ lastProToolsSessionCreated: event }),
-      activePanel: "dashboard",
-      setActivePanel: (panel) => set({ activePanel: panel }),
-      sidebarCollapsed: false,
-      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+    (set, get, api) => ({
+      ...createProjectSlice(set, get, api),
+      ...createIngestSlice(set, get, api),
+      ...createSettingsSlice(set, get, api),
+      ...createCrmSlice(set, get, api),
+      ...createSessionStatsSlice(set, get, api),
+      ...createWorkflowSlice(set, get, api),
+      ...createProToolsSlice(set, get, api),
+      ...createUiSlice(set, get, api),
     }),
     { name: "studio-cockpit-storage" }
   )

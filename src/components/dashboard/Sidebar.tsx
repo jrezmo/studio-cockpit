@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useStudioStore, type Panel } from "@/lib/store";
+import { useStudioStore } from "@/lib/store";
+import type { Panel } from "@/lib/types/projects";
 import {
   LayoutDashboard,
   FolderInput,

@@ -1,43 +1,53 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import {
   readSessionStatsData,
   writeSessionStatsData,
   upsertSessionStatsSessions,
 } from "@/lib/session-stats/storage";
 import { normalizeSession } from "@/lib/session-stats/utils";
-import type {
-  SessionStatsIngestPayload,
-  SessionStatsSession,
-  SessionStatsData,
-} from "@/lib/session-stats/types";
+import type { SessionStatsSession, SessionStatsData } from "@/lib/session-stats/types";
+import { sessionStatsActionSchema } from "@/lib/validation/sessionStatsSchema";
 
 export const runtime = "nodejs";
-
-type SessionStatsAction =
-  | {
-      action: "ingestSessions";
-      payload: SessionStatsIngestPayload | { sessions: SessionStatsSession[] };
-    }
-  | { action: "replaceSessions"; payload: SessionStatsSession[] };
 
 export async function GET() {
   const data = await readSessionStatsData();
   return NextResponse.json({ ok: true, data });
 }
 
-export async function POST(request: Request) {
-  const body = (await request.json()) as SessionStatsAction;
+function formatZodError(error: z.ZodError) {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length ? issue.path.join(".") : "payload";
+      return `${path}: ${issue.message}`;
+    })
+    .join("; ");
+}
 
-  if (!body || !("action" in body)) {
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
     return NextResponse.json(
-      { ok: false, error: "Missing action" },
+      { ok: false, error: "Invalid JSON payload" },
       { status: 400 }
     );
   }
 
-  switch (body.action) {
+  const parsed = sessionStatsActionSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: formatZodError(parsed.error) },
+      { status: 400 }
+    );
+  }
+
+  const { action, payload } = parsed.data;
+
+  switch (action) {
     case "ingestSessions": {
-      const payload = body.payload;
       let sessions: SessionStatsSession[] = [];
       if (Array.isArray(payload)) {
         sessions = payload;
@@ -56,7 +66,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, data });
     }
     case "replaceSessions": {
-      const sessions = body.payload ?? [];
+      const sessions = payload ?? [];
       const data: SessionStatsData = {
         sessions: sessions.map((session) => normalizeSession(session)),
         lastIngestedAt: new Date().toISOString(),

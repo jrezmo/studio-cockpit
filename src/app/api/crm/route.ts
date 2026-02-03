@@ -1,6 +1,5 @@
-"use server";
-
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { readCrmData, writeCrmData } from "@/lib/crm/storage";
 import type {
   Client,
@@ -10,13 +9,26 @@ import type {
   ClientTask,
   CrmData,
 } from "@/lib/crm/types";
+import {
+  clientPayloadSchema,
+  correspondencePayloadSchema,
+  projectPayloadSchema,
+} from "@/lib/validation/clientSchema";
+import { sessionPayloadSchema } from "@/lib/validation/sessionSchema";
+import { taskPayloadSchema } from "@/lib/validation/taskSchema";
 
-type CrmAction =
-  | { action: "addSession"; payload: Omit<ClientSession, "id"> }
-  | { action: "addTask"; payload: Omit<ClientTask, "id"> }
-  | { action: "addCorrespondence"; payload: Omit<ClientCorrespondence, "id"> }
-  | { action: "addClient"; payload: Omit<Client, "id"> }
-  | { action: "addProject"; payload: Omit<ClientProject, "id"> };
+export const runtime = "nodejs";
+
+const crmActionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("addSession"), payload: sessionPayloadSchema }),
+  z.object({ action: z.literal("addTask"), payload: taskPayloadSchema }),
+  z.object({
+    action: z.literal("addCorrespondence"),
+    payload: correspondencePayloadSchema,
+  }),
+  z.object({ action: z.literal("addClient"), payload: clientPayloadSchema }),
+  z.object({ action: z.literal("addProject"), payload: projectPayloadSchema }),
+]);
 
 function withId<T extends { id?: string }>(payload: T) {
   return { ...payload, id: payload.id ?? crypto.randomUUID() };
@@ -51,26 +63,39 @@ export async function GET() {
   return NextResponse.json({ ok: true, data });
 }
 
-export async function POST(request: Request) {
-  const body = (await request.json()) as CrmAction;
-  const data = await readCrmData();
+function formatZodError(error: z.ZodError) {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length ? issue.path.join(".") : "payload";
+      return `${path}: ${issue.message}`;
+    })
+    .join("; ");
+}
 
-  if (!body || !("action" in body)) {
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
     return NextResponse.json(
-      { ok: false, error: "Missing action" },
+      { ok: false, error: "Invalid JSON payload" },
       { status: 400 }
     );
   }
 
-  switch (body.action) {
+  const parsed = crmActionSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: formatZodError(parsed.error) },
+      { status: 400 }
+    );
+  }
+
+  const { action, payload } = parsed.data;
+  const data = await readCrmData();
+
+  switch (action) {
     case "addSession": {
-      const payload = body.payload;
-      if (!payload.clientId || !payload.startTime || !payload.endTime) {
-        return NextResponse.json(
-          { ok: false, error: "Missing session fields" },
-          { status: 400 }
-        );
-      }
       const session = withId(payload) as ClientSession;
       data.clientSessions = [session, ...data.clientSessions];
       updateClientTimestamp(data, session.clientId, session.endTime);
@@ -84,26 +109,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, data });
     }
     case "addTask": {
-      const payload = body.payload;
-      if (!payload.clientId || !payload.title) {
-        return NextResponse.json(
-          { ok: false, error: "Missing task fields" },
-          { status: 400 }
-        );
-      }
       const task = withId(payload) as ClientTask;
       data.clientTasks = [task, ...data.clientTasks];
       await writeCrmData(data);
       return NextResponse.json({ ok: true, data });
     }
     case "addCorrespondence": {
-      const payload = body.payload;
-      if (!payload.clientId || !payload.subject || !payload.occurredAt) {
-        return NextResponse.json(
-          { ok: false, error: "Missing correspondence fields" },
-          { status: 400 }
-        );
-      }
       const entry = withId(payload) as ClientCorrespondence;
       data.clientCorrespondence = [entry, ...data.clientCorrespondence];
       updateClientTimestamp(data, entry.clientId, entry.occurredAt);
@@ -111,26 +122,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, data });
     }
     case "addClient": {
-      const payload = body.payload;
-      if (!payload.name || !payload.primaryContact || !payload.email) {
-        return NextResponse.json(
-          { ok: false, error: "Missing client fields" },
-          { status: 400 }
-        );
-      }
       const client = withId(payload) as Client;
       data.clients = [client, ...data.clients];
       await writeCrmData(data);
       return NextResponse.json({ ok: true, data });
     }
     case "addProject": {
-      const payload = body.payload;
-      if (!payload.clientId || !payload.name) {
-        return NextResponse.json(
-          { ok: false, error: "Missing project fields" },
-          { status: 400 }
-        );
-      }
       const project = withId(payload) as ClientProject;
       data.clientProjects = [project, ...data.clientProjects];
       await writeCrmData(data);

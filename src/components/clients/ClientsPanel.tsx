@@ -2,25 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStudioStore } from "@/lib/store";
-import type { SessionType } from "@/lib/crm/types";
+import type { SessionType, CrmData } from "@/lib/crm/types";
+import { useApiMutation } from "@/hooks/useApiMutation";
+import { useFetch } from "@/hooks/useFetch";
+import { useFormState } from "@/hooks/useFormState";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import {
-  Users,
-  Timer,
-  Mail,
-  MessageSquare,
-  Phone,
-  CalendarClock,
-  ClipboardList,
-  ArrowUpRight,
-} from "lucide-react";
+import { Timer, Mail, ClipboardList } from "lucide-react";
 import { format, formatDistanceToNow, isThisMonth } from "date-fns";
+import { ClientList } from "@/components/clients/ClientList";
+import { ClientForm } from "@/components/clients/ClientForm";
+import { ClientProfile } from "@/components/clients/ClientProfile";
+import { CorrespondenceLog } from "@/components/clients/CorrespondenceLog";
+import { SessionTimer } from "@/components/clients/SessionTimer";
+import { TaskBoard } from "@/components/clients/TaskBoard";
 
 const sessionTypeOptions: SessionType[] = [
   "mixing",
@@ -106,8 +105,6 @@ export function ClientsPanel() {
     }))
   );
 
-  const [loading, setLoading] = useState(false);
-  const [loadingError, setLoadingError] = useState("");
   const [search, setSearch] = useState("");
   const [timerRunning, setTimerRunning] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -123,35 +120,51 @@ export function ClientsPanel() {
   const [manualNotes, setManualNotes] = useState("");
   const [logError, setLogError] = useState("");
   const [showTaskForm, setShowTaskForm] = useState(false);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskStatus, setTaskStatus] = useState<"todo" | "in-progress" | "blocked" | "done">(
-    "todo"
-  );
-  const [taskDueAt, setTaskDueAt] = useState("");
-  const [taskAssignee, setTaskAssignee] = useState("");
-  const [taskProjectId, setTaskProjectId] = useState<string>("");
+  const taskForm = useFormState({
+    title: "",
+    status: "todo" as "todo" | "in-progress" | "blocked" | "done",
+    dueAt: "",
+    assignee: "",
+    projectId: "",
+  });
   const [showCorrespondenceForm, setShowCorrespondenceForm] = useState(false);
-  const [corrChannel, setCorrChannel] = useState<"email" | "sms" | "call" | "note">(
-    "email"
-  );
-  const [corrDirection, setCorrDirection] = useState<"inbound" | "outbound">(
-    "inbound"
-  );
-  const [corrSubject, setCorrSubject] = useState("");
-  const [corrSummary, setCorrSummary] = useState("");
-  const [corrOccurredAt, setCorrOccurredAt] = useState("");
+  const correspondenceForm = useFormState({
+    channel: "email" as "email" | "sms" | "call" | "note",
+    direction: "inbound" as "inbound" | "outbound",
+    subject: "",
+    summary: "",
+    occurredAt: "",
+  });
   const [showClientForm, setShowClientForm] = useState(false);
-  const [clientName, setClientName] = useState("");
-  const [clientContact, setClientContact] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
-  const [clientRate, setClientRate] = useState("85");
-  const [clientStatus, setClientStatus] = useState<"active" | "at-risk" | "inactive">(
-    "active"
-  );
+  const clientForm = useFormState({
+    name: "",
+    contact: "",
+    email: "",
+    phone: "",
+    rate: "85",
+    status: "active" as "active" | "at-risk" | "inactive",
+  });
   const [consoleTab, setConsoleTab] = useState<
     "overview" | "sessions" | "tasks" | "comms"
   >("overview");
+
+  const { error: loadingError, loading } = useFetch<CrmData>("/api/crm", {
+    retries: 2,
+    delayMs: 400,
+    errorMessage: "Unable to load CRM data.",
+    onSuccess: setCrmData,
+    onError: (message) => {
+      console.error("Failed to load CRM data.", message);
+    },
+  });
+
+  const { mutate: mutateCrm } = useApiMutation<CrmData>("/api/crm", {
+    retries: 2,
+    delayMs: 400,
+    errorMessage: "Unable to save changes.",
+    onSuccess: setCrmData,
+    onError: setLogError,
+  });
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -162,48 +175,9 @@ export function ClientsPanel() {
     return () => window.clearInterval(interval);
   }, [timerRunning]);
 
-  useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    fetch("/api/crm")
-      .then((response) => response.json())
-      .then((result) => {
-        if (!isMounted) return;
-        if (result?.ok && result?.data) {
-          setCrmData(result.data);
-        } else {
-          setLoadingError(result?.error || "Unable to load CRM data.");
-        }
-      })
-      .catch(() => {
-        if (isMounted) setLoadingError("Unable to load CRM data.");
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [setCrmData]);
-
   async function postCrmAction(action: string, payload: Record<string, unknown>) {
-    try {
-      const response = await fetch("/api/crm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, payload }),
-      });
-      const result = await response.json();
-      if (result?.ok && result?.data) {
-        setCrmData(result.data);
-        return true;
-      }
-      setLogError(result?.error || "Unable to save changes.");
-      return false;
-    } catch {
-      setLogError("Unable to save changes.");
-      return false;
-    }
+    const result = await mutateCrm({ action, payload });
+    return result.ok;
   }
 
   const filteredClients = useMemo(() => {
@@ -409,79 +383,72 @@ export function ClientsPanel() {
   };
 
   const handleAddTask = async () => {
-    if (!activeClient || !taskTitle.trim()) {
+    if (!activeClient || !taskForm.values.title.trim()) {
       setLogError("Add a task title before saving.");
       return;
     }
     setLogError("");
     const saved = await postCrmAction("addTask", {
       clientId: activeClient.id,
-      projectId: taskProjectId || undefined,
-      title: taskTitle.trim(),
-      status: taskStatus,
-      dueAt: taskDueAt || undefined,
-      assignee: taskAssignee || undefined,
+      projectId: taskForm.values.projectId || undefined,
+      title: taskForm.values.title.trim(),
+      status: taskForm.values.status,
+      dueAt: taskForm.values.dueAt || undefined,
+      assignee: taskForm.values.assignee || undefined,
     });
     if (saved) {
-      setTaskTitle("");
-      setTaskAssignee("");
-      setTaskDueAt("");
-      setTaskProjectId("");
-      setTaskStatus("todo");
+      taskForm.reset();
       setShowTaskForm(false);
     }
   };
 
   const handleAddCorrespondence = async () => {
-    if (!activeClient || !corrSubject.trim()) {
+    if (!activeClient || !correspondenceForm.values.subject.trim()) {
       setLogError("Add a subject before saving the message.");
       return;
     }
     setLogError("");
-    const occurredAt = corrOccurredAt
-      ? new Date(corrOccurredAt).toISOString()
+    const occurredAt = correspondenceForm.values.occurredAt
+      ? new Date(correspondenceForm.values.occurredAt).toISOString()
       : new Date().toISOString();
     const saved = await postCrmAction("addCorrespondence", {
       clientId: activeClient.id,
-      channel: corrChannel,
-      direction: corrDirection,
-      subject: corrSubject.trim(),
-      summary: corrSummary.trim() || "Logged message",
+      channel: correspondenceForm.values.channel,
+      direction: correspondenceForm.values.direction,
+      subject: correspondenceForm.values.subject.trim(),
+      summary: correspondenceForm.values.summary.trim() || "Logged message",
       occurredAt,
       participants: [activeClient.primaryContact],
     });
     if (saved) {
-      setCorrSubject("");
-      setCorrSummary("");
-      setCorrOccurredAt("");
+      correspondenceForm.reset();
       setShowCorrespondenceForm(false);
     }
   };
 
   const handleAddClient = async () => {
-    if (!clientName.trim() || !clientContact.trim() || !clientEmail.trim()) {
+    if (
+      !clientForm.values.name.trim() ||
+      !clientForm.values.contact.trim() ||
+      !clientForm.values.email.trim()
+    ) {
       setLogError("Client name, contact, and email are required.");
       return;
     }
     setLogError("");
     const saved = await postCrmAction("addClient", {
-      name: clientName.trim(),
-      primaryContact: clientContact.trim(),
-      email: clientEmail.trim(),
-      phone: clientPhone.trim() || undefined,
-      ratePerHour: Number.parseFloat(clientRate) || 0,
-      status: clientStatus,
+      name: clientForm.values.name.trim(),
+      primaryContact: clientForm.values.contact.trim(),
+      email: clientForm.values.email.trim(),
+      phone: clientForm.values.phone.trim() || undefined,
+      ratePerHour: Number.parseFloat(clientForm.values.rate) || 0,
+      status: clientForm.values.status,
       tags: [],
       lastContactAt: new Date().toISOString(),
       notes: "",
     });
     if (saved) {
-      setClientName("");
-      setClientContact("");
-      setClientEmail("");
-      setClientPhone("");
-      setClientRate("85");
-      setClientStatus("active");
+      clientForm.reset();
       setShowClientForm(false);
     }
   };
@@ -495,80 +462,16 @@ export function ClientsPanel() {
   }
 
   const leftRail = (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Users className="h-4 w-4" />
-          Client List
-        </div>
-        <Input
-          placeholder="Search clients..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        {loading && (
-          <p className="text-[10px] text-muted-foreground">Syncing CRM...</p>
-        )}
-        <div className="space-y-2">
-          {filteredClients.map((client) => {
-            const projectCount = clientProjects.filter(
-              (project) => project.clientId === client.id
-            ).length;
-            const lastContact = client.lastContactAt
-              ? formatDistanceToNow(new Date(client.lastContactAt), {
-                  addSuffix: true,
-                })
-              : "—";
-            return (
-              <button
-                key={client.id}
-                onClick={() => setActiveClientId(client.id)}
-                className={cn(
-                  "w-full rounded-md border border-transparent bg-secondary/40 px-3 py-2 text-left transition-colors hover:bg-secondary",
-                  client.id === activeClient.id && "border-primary/40 bg-secondary"
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold truncate">{client.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {projectCount} projects · {lastContact}
-                    </p>
-                  </div>
-                  <Badge
-                    className={cn(
-                      "text-[10px]",
-                      clientStatusStyles[client.status]
-                    )}
-                  >
-                    {client.status.replace("-", " ")}
-                  </Badge>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <CalendarClock className="h-4 w-4" />
-          Upcoming Sessions
-        </div>
-        <div className="space-y-2 text-xs">
-          {clients
-            .filter((client) => client.nextSessionAt)
-            .map((client) => (
-              <div key={client.id} className="flex items-center justify-between">
-                <span className="font-medium">{client.name}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {format(new Date(client.nextSessionAt ?? ""), "MMM d, h:mma")}
-                </span>
-              </div>
-            ))}
-        </div>
-      </div>
-    </div>
+    <ClientList
+      filteredClients={filteredClients}
+      clients={clients}
+      clientProjects={clientProjects}
+      activeClientId={activeClient.id}
+      onSelectClient={setActiveClientId}
+      search={search}
+      onSearchChange={setSearch}
+      loading={loading}
+    />
   );
 
   const kpiRow = (
@@ -597,119 +500,31 @@ export function ClientsPanel() {
   );
 
   const clientProfileCard = (
-    <div
-      className={cn(
-        "rounded-lg border border-border bg-card p-5 space-y-4",
-        clientsView === "console" &&
-          "bg-gradient-to-br from-slate-950/90 via-slate-900/70 to-slate-900/30 border-primary/20"
-      )}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3
-            className={cn(
-              "text-sm font-semibold",
-              clientsView === "console" && "text-lg"
-            )}
-          >
-            {activeClient.name}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {activeClient.primaryContact} · {activeClient.email}
-          </p>
-        </div>
-        <Badge className={cn(clientStatusStyles[activeClient.status])}>
-          {activeClient.status.replace("-", " ")}
-        </Badge>
-      </div>
-
-      <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-        {activeClient.tags.map((tag) => (
-          <Badge key={tag} variant="secondary" className="text-[10px]">
-            {tag}
-          </Badge>
-        ))}
-      </div>
-
-      <Separator />
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <div>
-          <p className="text-xs text-muted-foreground">Rate</p>
-          <p className="text-sm font-semibold">
-            ${activeClient.ratePerHour}/hr
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Next Session</p>
-          <p className="text-sm font-semibold">
-            {activeClient.nextSessionAt
-              ? format(new Date(activeClient.nextSessionAt), "MMM d, h:mma")
-              : "Not scheduled"}
-          </p>
-        </div>
-      </div>
-
-      {activeClient.notes && (
-        <div className="rounded-md bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
-          {activeClient.notes}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground">
-          Active Projects
-        </p>
-        {activeClientProjects.map((project) => {
-          const protoolsProject = projects.find(
-            (item) => item.id === project.protoolsProjectId
-          );
-          return (
-            <div
-              key={project.id}
-              className="rounded-md border border-border bg-secondary/30 p-3 text-xs"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="font-semibold">{project.name}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {project.status} · {formatDuration(project.totalLoggedMinutes)}
-                  </p>
-                </div>
-                {protoolsProject && (
-                  <Badge variant="secondary" className="text-[10px]">
-                    {protoolsProject.sampleRate / 1000}kHz
-                  </Badge>
-                )}
-              </div>
-              {protoolsProject && (
-                <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <ArrowUpRight className="h-3 w-3" />
-                  Pro Tools: {protoolsProject.projectName}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <ClientProfile
+      client={activeClient}
+      activeClientProjects={activeClientProjects}
+      projects={projects}
+      clientsView={clientsView}
+      statusClassName={clientStatusStyles[activeClient.status]}
+      formatDuration={formatDuration}
+    />
   );
 
-  const taskForm = showTaskForm ? (
+  const taskFormContent = showTaskForm ? (
     <div className="rounded-md border border-border bg-secondary/20 p-3 space-y-2">
       <div className="space-y-1.5">
         <Label className="text-[10px]">Task</Label>
         <Input
-          value={taskTitle}
-          onChange={(event) => setTaskTitle(event.target.value)}
+          value={taskForm.values.title}
+          onChange={(event) => taskForm.update("title", event.target.value)}
           placeholder="Deliver stems, send mix notes..."
         />
       </div>
       <div className="space-y-1.5">
         <Label className="text-[10px]">Project</Label>
         <select
-          value={taskProjectId}
-          onChange={(event) => setTaskProjectId(event.target.value)}
+          value={taskForm.values.projectId}
+          onChange={(event) => taskForm.update("projectId", event.target.value)}
           className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
         >
           <option value="">General / Non-project</option>
@@ -724,9 +539,10 @@ export function ClientsPanel() {
         <div className="space-y-1.5">
           <Label className="text-[10px]">Status</Label>
           <select
-            value={taskStatus}
+            value={taskForm.values.status}
             onChange={(event) =>
-              setTaskStatus(
+              taskForm.update(
+                "status",
                 event.target.value as "todo" | "in-progress" | "blocked" | "done"
               )
             }
@@ -742,15 +558,15 @@ export function ClientsPanel() {
           <Label className="text-[10px]">Due Date</Label>
           <Input
             type="date"
-            value={taskDueAt}
-            onChange={(event) => setTaskDueAt(event.target.value)}
+            value={taskForm.values.dueAt}
+            onChange={(event) => taskForm.update("dueAt", event.target.value)}
           />
         </div>
         <div className="space-y-1.5">
           <Label className="text-[10px]">Assignee</Label>
           <Input
-            value={taskAssignee}
-            onChange={(event) => setTaskAssignee(event.target.value)}
+            value={taskForm.values.assignee}
+            onChange={(event) => taskForm.update("assignee", event.target.value)}
           />
         </div>
       </div>
@@ -760,15 +576,18 @@ export function ClientsPanel() {
     </div>
   ) : null;
 
-  const correspondenceForm = showCorrespondenceForm ? (
+  const correspondenceFormContent = showCorrespondenceForm ? (
     <div className="rounded-md border border-border bg-secondary/20 p-3 space-y-2">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-[10px]">Channel</Label>
           <select
-            value={corrChannel}
+            value={correspondenceForm.values.channel}
             onChange={(event) =>
-              setCorrChannel(event.target.value as "email" | "sms" | "call" | "note")
+              correspondenceForm.update(
+                "channel",
+                event.target.value as "email" | "sms" | "call" | "note"
+              )
             }
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
           >
@@ -781,9 +600,12 @@ export function ClientsPanel() {
         <div className="space-y-1.5">
           <Label className="text-[10px]">Direction</Label>
           <select
-            value={corrDirection}
+            value={correspondenceForm.values.direction}
             onChange={(event) =>
-              setCorrDirection(event.target.value as "inbound" | "outbound")
+              correspondenceForm.update(
+                "direction",
+                event.target.value as "inbound" | "outbound"
+              )
             }
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
           >
@@ -794,16 +616,16 @@ export function ClientsPanel() {
         <div className="space-y-1.5 sm:col-span-2">
           <Label className="text-[10px]">Subject</Label>
           <Input
-            value={corrSubject}
-            onChange={(event) => setCorrSubject(event.target.value)}
+            value={correspondenceForm.values.subject}
+            onChange={(event) => correspondenceForm.update("subject", event.target.value)}
             placeholder="Session notes, mix feedback..."
           />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label className="text-[10px]">Summary</Label>
           <Input
-            value={corrSummary}
-            onChange={(event) => setCorrSummary(event.target.value)}
+            value={correspondenceForm.values.summary}
+            onChange={(event) => correspondenceForm.update("summary", event.target.value)}
             placeholder="Quick summary of the message"
           />
         </div>
@@ -811,8 +633,10 @@ export function ClientsPanel() {
           <Label className="text-[10px]">Occurred At</Label>
           <Input
             type="datetime-local"
-            value={corrOccurredAt}
-            onChange={(event) => setCorrOccurredAt(event.target.value)}
+            value={correspondenceForm.values.occurredAt}
+            onChange={(event) =>
+              correspondenceForm.update("occurredAt", event.target.value)
+            }
           />
         </div>
       </div>
@@ -823,185 +647,39 @@ export function ClientsPanel() {
   ) : null;
 
   const timerCard = (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Timer className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Session Timer</h3>
-        </div>
-        <Badge variant="secondary" className="text-[10px]">
-          {timerRunning ? "Running" : elapsedSeconds ? "Paused" : "Idle"}
-        </Badge>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="rounded-md bg-secondary/40 px-4 py-3 font-mono text-lg">
-          {formatElapsed(elapsedSeconds)}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {!timerRunning && elapsedSeconds === 0 && (
-            <Button size="sm" onClick={handleTimerStart}>
-              Start
-            </Button>
-          )}
-          {timerRunning && (
-            <Button size="sm" variant="secondary" onClick={handleTimerPause}>
-              Pause
-            </Button>
-          )}
-          {!timerRunning && elapsedSeconds > 0 && (
-            <Button size="sm" onClick={handleTimerResume}>
-              Resume
-            </Button>
-          )}
-          <Button size="sm" variant="outline" onClick={handleTimerReset}>
-            Reset
-          </Button>
-          <Button size="sm" variant="secondary" onClick={handleLogTimer}>
-            Log Session
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Session Type</Label>
-        <div className="flex flex-wrap gap-2">
-          {sessionTypeOptions.map((option) => (
-            <Button
-              key={option}
-              size="xs"
-              variant={timerType === option ? "secondary" : "ghost"}
-              onClick={() => setTimerType(option)}
-            >
-              {option}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Project</Label>
-        <select
-          value={timerProjectId}
-          onChange={(event) => setTimerProjectId(event.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="">General / Non-project</option>
-          {activeClientProjects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Notes</Label>
-        <Input
-          value={timerNotes}
-          onChange={(event) => setTimerNotes(event.target.value)}
-          placeholder="Automation tweaks, review notes..."
-        />
-      </div>
-
-      <Separator />
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <ClipboardList className="h-4 w-4" />
-          Manual Session Log
-        </div>
-        <div className="flex gap-2">
-          <Button
-            size="xs"
-            variant={manualMode === "duration" ? "secondary" : "ghost"}
-            onClick={() => setManualMode("duration")}
-          >
-            Duration
-          </Button>
-          <Button
-            size="xs"
-            variant={manualMode === "range" ? "secondary" : "ghost"}
-            onClick={() => setManualMode("range")}
-          >
-            Start / End
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Type</Label>
-          <select
-            value={manualType}
-            onChange={(event) => setManualType(event.target.value as SessionType)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            {sessionTypeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Project</Label>
-          <select
-            value={manualProjectId}
-            onChange={(event) => setManualProjectId(event.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="">General / Non-project</option>
-            {activeClientProjects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {manualMode === "duration" ? (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Duration (minutes)</Label>
-            <Input
-              value={manualDuration}
-              onChange={(event) => setManualDuration(event.target.value)}
-              placeholder="90"
-            />
-          </div>
-        ) : (
-          <>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Start</Label>
-              <Input
-                type="datetime-local"
-                value={manualStart}
-                onChange={(event) => setManualStart(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">End</Label>
-              <Input
-                type="datetime-local"
-                value={manualEnd}
-                onChange={(event) => setManualEnd(event.target.value)}
-              />
-            </div>
-          </>
-        )}
-        <div className="sm:col-span-2 space-y-1.5">
-          <Label className="text-xs">Notes</Label>
-          <Input
-            value={manualNotes}
-            onChange={(event) => setManualNotes(event.target.value)}
-            placeholder="Session highlights, deliverables..."
-          />
-        </div>
-      </div>
-
-      <Button size="sm" onClick={handleManualLog}>
-        Add Session
-      </Button>
-    </div>
+    <SessionTimer
+      timerRunning={timerRunning}
+      elapsedSeconds={elapsedSeconds}
+      timerType={timerType}
+      onTimerTypeChange={setTimerType}
+      timerProjectId={timerProjectId}
+      onTimerProjectChange={setTimerProjectId}
+      timerNotes={timerNotes}
+      onTimerNotesChange={setTimerNotes}
+      onTimerStart={handleTimerStart}
+      onTimerPause={handleTimerPause}
+      onTimerResume={handleTimerResume}
+      onTimerReset={handleTimerReset}
+      onLogTimer={handleLogTimer}
+      sessionTypeOptions={sessionTypeOptions}
+      activeClientProjects={activeClientProjects}
+      manualMode={manualMode}
+      onManualModeChange={setManualMode}
+      manualType={manualType}
+      onManualTypeChange={setManualType}
+      manualProjectId={manualProjectId}
+      onManualProjectChange={setManualProjectId}
+      manualDuration={manualDuration}
+      onManualDurationChange={setManualDuration}
+      manualStart={manualStart}
+      manualEnd={manualEnd}
+      onManualStartChange={setManualStart}
+      onManualEndChange={setManualEnd}
+      manualNotes={manualNotes}
+      onManualNotesChange={setManualNotes}
+      onManualLog={handleManualLog}
+      formatElapsed={formatElapsed}
+    />
   );
 
   const loggedSessionsCard = (
@@ -1060,7 +738,7 @@ export function ClientsPanel() {
           {showTaskForm ? "Close" : "Add Task"}
         </Button>
       </div>
-      {taskForm}
+      {taskFormContent}
       <div className="space-y-2">
         {activeClientTasks.map((task) => (
           <div
@@ -1088,54 +766,12 @@ export function ClientsPanel() {
   );
 
   const correspondenceCard = (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Correspondence</h3>
-        <Button
-          size="xs"
-          variant="secondary"
-          onClick={() => setShowCorrespondenceForm((prev) => !prev)}
-        >
-          {showCorrespondenceForm ? "Close" : "Add Entry"}
-        </Button>
-      </div>
-      {correspondenceForm}
-      <div className="space-y-2">
-        {activeClientCorrespondence.map((item) => {
-          const Icon =
-            item.channel === "email"
-              ? Mail
-              : item.channel === "sms"
-              ? MessageSquare
-              : item.channel === "call"
-              ? Phone
-              : Mail;
-          return (
-            <div
-              key={item.id}
-              className="rounded-md bg-secondary/30 px-3 py-2 text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold truncate">{item.subject}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {item.direction === "inbound" ? "Inbound" : "Outbound"} ·{" "}
-                    {format(new Date(item.occurredAt), "MMM d, h:mma")}
-                  </p>
-                </div>
-                <Badge variant="outline" className="text-[10px]">
-                  {item.channel}
-                </Badge>
-              </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {item.summary}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <CorrespondenceLog
+      entries={activeClientCorrespondence}
+      showForm={showCorrespondenceForm}
+      onToggleForm={() => setShowCorrespondenceForm((prev) => !prev)}
+      formContent={correspondenceFormContent}
+    />
   );
 
   const logbookTimelineCard = (
@@ -1246,55 +882,12 @@ export function ClientsPanel() {
   );
 
   const taskBoard = (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">Session Board</h3>
-        <Button
-          size="xs"
-          variant="secondary"
-          onClick={() => setShowTaskForm((prev) => !prev)}
-        >
-          {showTaskForm ? "Close" : "Add Task"}
-        </Button>
-      </div>
-      {taskForm}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        {(
-          [
-            { key: "todo", label: "To Do" },
-            { key: "in-progress", label: "In Progress" },
-            { key: "blocked", label: "Blocked" },
-            { key: "done", label: "Done" },
-          ] as const
-        ).map((column) => (
-          <div key={column.key} className="rounded-md bg-secondary/20 p-3">
-            <div className="mb-2 flex items-center justify-between text-[10px] text-muted-foreground">
-              <span>{column.label}</span>
-              <span>{tasksByStatus[column.key].length}</span>
-            </div>
-            <div className="space-y-2">
-              {tasksByStatus[column.key].map((task) => (
-                <div
-                  key={task.id}
-                  className="rounded-md border border-border bg-secondary/40 px-2.5 py-2 text-xs"
-                >
-                  <p className="font-semibold">{task.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {task.assignee ?? "Unassigned"}
-                    {task.dueAt ? ` · due ${task.dueAt}` : ""}
-                  </p>
-                </div>
-              ))}
-              {tasksByStatus[column.key].length === 0 && (
-                <p className="text-[10px] text-muted-foreground">
-                  No tasks in this lane.
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <TaskBoard
+      tasksByStatus={tasksByStatus}
+      showTaskForm={showTaskForm}
+      onToggleForm={() => setShowTaskForm((prev) => !prev)}
+      formContent={taskFormContent}
+    />
   );
 
   const consoleTabs = (
@@ -1443,76 +1036,13 @@ export function ClientsPanel() {
         </div>
       </div>
 
-      {showClientForm && (
-        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold">New Client</h3>
-              <p className="text-xs text-muted-foreground">
-                Add a client record to start tracking work.
-              </p>
-            </div>
-            <Button size="xs" variant="outline" onClick={() => setShowClientForm(false)}>
-              Close
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Client Name</Label>
-              <Input
-                value={clientName}
-                onChange={(event) => setClientName(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Primary Contact</Label>
-              <Input
-                value={clientContact}
-                onChange={(event) => setClientContact(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Email</Label>
-              <Input
-                type="email"
-                value={clientEmail}
-                onChange={(event) => setClientEmail(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Phone</Label>
-              <Input
-                value={clientPhone}
-                onChange={(event) => setClientPhone(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Rate (per hour)</Label>
-              <Input
-                value={clientRate}
-                onChange={(event) => setClientRate(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Status</Label>
-              <select
-                value={clientStatus}
-                onChange={(event) =>
-                  setClientStatus(event.target.value as "active" | "at-risk" | "inactive")
-                }
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="active">active</option>
-                <option value="at-risk">at risk</option>
-                <option value="inactive">inactive</option>
-              </select>
-            </div>
-          </div>
-          <Button size="sm" onClick={handleAddClient}>
-            Save Client
-          </Button>
-        </div>
-      )}
+      <ClientForm
+        visible={showClientForm}
+        values={clientForm.values}
+        onUpdate={(key, value) => clientForm.update(key, value)}
+        onClose={() => setShowClientForm(false)}
+        onSave={handleAddClient}
+      />
 
       {loadingError && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive">

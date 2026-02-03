@@ -1,3 +1,4 @@
+// MCP bridge for Pro Tools automation: resolves paths and invokes MCP tools.
 import { spawn } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -9,6 +10,7 @@ export type McpResult = {
   raw?: string;
 };
 
+/** Resolve the Pro Tools PTSL proto definition path from env or local SDK directory. */
 export function resolveProtoPath() {
   const envPath = process.env.PTSL_PROTO_PATH;
   if (envPath && existsSync(envPath)) return envPath;
@@ -29,6 +31,7 @@ export function resolveProtoPath() {
   return null;
 }
 
+/** Resolve the MCP server entry point from env or the local protools-mcp-server build. */
 export function resolveMcpPath() {
   const envPath = process.env.PROTOOLS_MCP_PATH;
   if (envPath && existsSync(envPath)) return envPath;
@@ -42,10 +45,12 @@ export function resolveMcpPath() {
   return null;
 }
 
+/** Read the allow-writes policy string from env (comma-separated groups or "all"). */
 export function getAllowWrites() {
   return process.env.PROTOOLS_ALLOW_WRITES || "";
 }
 
+/** Check whether the required write permission groups are enabled. */
 export function hasWritePermissions(
   allowWrites: string,
   required: string[]
@@ -61,6 +66,7 @@ export function hasWritePermissions(
   return required.every((group) => groups.includes(group));
 }
 
+/** Invoke an MCP tool with args, returning structured output and raw logs. */
 export async function runMcpTool(
   tool: string,
   args: Record<string, unknown>,

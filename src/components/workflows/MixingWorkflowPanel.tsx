@@ -9,7 +9,8 @@ import {
   PlayCircle,
   RotateCcw,
 } from "lucide-react";
-import { useStudioStore, type WorkflowStepStatus } from "@/lib/store";
+import { useStudioStore } from "@/lib/store";
+import type { WorkflowStepStatus } from "@/lib/types/projects";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

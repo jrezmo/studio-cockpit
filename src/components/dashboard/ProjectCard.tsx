@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { Project, ProjectStatus } from "@/lib/store";
+import type { Project, ProjectStatus } from "@/lib/types/projects";
 import { formatBytes, formatSampleRate } from "@/lib/format";
 import { formatDistanceToNow } from "date-fns";
 import { Folder, Music } from "lucide-react";
