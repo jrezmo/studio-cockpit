@@ -26,9 +26,9 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 
 *   **🎛️ Unified Dashboard**: A multi-panel dashboard for quick access to all your tools.
 *   **📂 Smart Ingest**: An Ingest Agent with history and detection rules to organize your files.
-*   **▶️ Session Launcher**: A guided, multi-step UX for launching complex sessions.
 *   **🎵 Stem Engine**: Generate standardized stem filenames with ease.
 *   **⚙️ Centralized Settings**: A persistent settings panel to manage your studio configuration.
+*   **🔌 Pro Tools MCP**: Live session info, markers, and new project creation via PTSL.
 
 ### 🛠️ Tech Stack
 
@@ -54,6 +54,36 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
     npm run dev
     ```
     Open [http://localhost:3000](http://localhost:3000) to see the app.
+
+### 🔌 Pro Tools MCP Setup
+
+Studio Cockpit can drive Pro Tools through the MCP server (PTSL gRPC). To enable it:
+
+1.  **Clone and build the MCP server** (sibling to this repo):
+    ```bash
+    git clone https://github.com/skrul/protools-mcp-server.git ../protools-mcp-server
+    cd ../protools-mcp-server
+    npm install
+    npm run build
+    ```
+    Note: `protools-mcp-server/` is intentionally ignored in this repo.
+
+2.  **Download the Pro Tools Scripting Library SDK** and locate `PTSL.proto`.
+
+3.  **Export environment variables** (same shell you run `npm run dev` from):
+    ```bash
+    export PTSL_PROTO_PATH="/absolute/path/to/PTSL.proto"
+    export PROTOOLS_MCP_PATH="/absolute/path/to/protools-mcp-server/dist/index.js"
+    export PROTOOLS_ALLOW_WRITES="session,track_structure"
+    ```
+
+4.  **Run the app** and open the **Pro Tools** panel.
+
+**Write permissions**
+`PROTOOLS_ALLOW_WRITES` controls what Pro Tools operations are allowed.
+- `memory` enables markers
+- `session,track_structure` enables New Project creation
+- `all` enables full write access
 
 ### 🤝 Contributing
 

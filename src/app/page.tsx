@@ -5,7 +5,6 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
 import { IngestPanel } from "@/components/ingest/IngestPanel";
-import { SessionLauncher } from "@/components/sessions/SessionLauncher";
 import { StemEngine } from "@/components/stems/StemEngine";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
@@ -13,7 +12,6 @@ import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,
   ingest: IngestPanel,
-  sessions: SessionLauncher,
   stems: StemEngine,
   settings: SettingsPanel,
   protools: ProToolsPanel,

@@ -5,7 +5,6 @@ import { useStudioStore, type Panel } from "@/lib/store";
 import {
   LayoutDashboard,
   FolderInput,
-  Play,
   AudioLines,
   Settings,
   PlugZap,
@@ -17,7 +16,6 @@ import { useShallow } from "zustand/react/shallow";
 const navItems: { id: Panel; label: string; icon: React.ElementType }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "ingest", label: "Ingest Agent", icon: FolderInput },
-  { id: "sessions", label: "Session Launcher", icon: Play },
   { id: "stems", label: "Stem Engine", icon: AudioLines },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "protools", label: "Pro Tools", icon: PlugZap },

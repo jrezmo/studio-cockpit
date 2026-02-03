@@ -5,7 +5,6 @@ import { useStudioStore } from "@/lib/store";
 const panelTitles: Record<string, string> = {
   dashboard: "Dashboard",
   ingest: "Ingest Agent",
-  sessions: "Session Launcher",
   stems: "Stem Engine",
   settings: "Settings",
   protools: "Pro Tools",

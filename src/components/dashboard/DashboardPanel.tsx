@@ -5,7 +5,7 @@ import { formatBytes } from "@/lib/format";
 import { StatusWidget } from "./StatusWidget";
 import { ProjectCard } from "./ProjectCard";
 import { Button } from "@/components/ui/button";
-import { FolderInput, Play, AudioLines, RefreshCw } from "lucide-react";
+import { FolderInput, PlugZap, AudioLines, RefreshCw } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
 export function DashboardPanel() {
@@ -68,10 +68,10 @@ export function DashboardPanel() {
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => setActivePanel("sessions")}
+          onClick={() => setActivePanel("protools")}
         >
-          <Play className="mr-2 h-3.5 w-3.5" />
-          Launch Session
+          <PlugZap className="mr-2 h-3.5 w-3.5" />
+          Pro Tools
         </Button>
         <Button
           size="sm"

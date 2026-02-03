@@ -6,7 +6,6 @@ export type IngestStatus = "success" | "pending" | "error";
 export type Panel =
   | "dashboard"
   | "ingest"
-  | "sessions"
   | "stems"
   | "settings"
   | "protools";
