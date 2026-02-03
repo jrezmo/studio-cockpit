@@ -30,6 +30,13 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 *   **⚙️ Centralized Settings**: A persistent settings panel to manage your studio configuration.
 *   **🔌 Pro Tools MCP**: Live session info, markers, and new project creation via PTSL.
 
+### 📚 Documentation & Marketing
+
+*   **User Guide**: `docs/user-guide.md`
+*   **One-Sheet**: `docs/one-sheet.md`
+*   **Ad Copy**: `docs/marketing/ads.md`
+*   **Website Copy**: `docs/website-copy.md`
+
 ### 🛠️ Tech Stack
 
 *   [Next.js](https://nextjs.org/) & [React 19](https://react.dev/)
