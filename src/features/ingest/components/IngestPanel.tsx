@@ -72,6 +72,7 @@ export function IngestPanel() {
     "idle"
   );
   const [prepMessage, setPrepMessage] = useState("");
+  const [uploadState, setUploadState] = useState<"idle" | "uploading">("idle");
 
   const { supportsDialog, pickPath } = usePathDialog();
 
@@ -197,18 +198,82 @@ export function IngestPanel() {
     setPrepState("loading");
     setPrepMessage("");
 
+    let uploadedFiles: Array<{ name: string; path: string }> = [];
+    if (webSelectedFiles.length > 0) {
+      setUploadState("uploading");
+      try {
+        const formData = new FormData();
+        webSelectedFiles.forEach((file) => {
+          formData.append("files", file, file.name);
+        });
+        const uploadResponse = await fetch("/api/session-prep/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const uploadResult = (await uploadResponse.json()) as {
+          ok: boolean;
+          files?: Array<{ name: string; path: string }>;
+          error?: string;
+        };
+        if (!uploadResult.ok || !uploadResult.files) {
+          throw new Error(uploadResult.error || "Upload failed.");
+        }
+        uploadedFiles = uploadResult.files;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Upload failed.";
+        setPrepState("error");
+        setPrepMessage(message);
+        setUploadState("idle");
+        return;
+      }
+      setUploadState("idle");
+    }
+
     if (prepMode === "existing") {
       if (!selectedSessionId) {
         setPrepState("error");
         setPrepMessage("Select an existing session to continue.");
         return;
       }
+      if (uploadedFiles.length > 0) {
+        const sessionPath = activeSession?.path;
+        if (!sessionPath) {
+          setPrepState("error");
+          setPrepMessage("Selected session has no path on record.");
+          return;
+        }
+        try {
+          const attachResponse = await fetch("/api/session-prep/attach", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionPath,
+              files: uploadedFiles,
+            }),
+          });
+          const attachResult = (await attachResponse.json()) as {
+            ok: boolean;
+            error?: string;
+          };
+          if (!attachResult.ok) {
+            throw new Error(attachResult.error || "Attach failed.");
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Attach failed.";
+          setPrepState("error");
+          setPrepMessage(message);
+          addPrepRecord(sessionPath ?? buildSessionLocation(), "error", message);
+          return;
+        }
+      }
       const targetPath = buildSessionLocation();
       addPrepRecord(targetPath, "success");
       setPrepState("ok");
       setPrepMessage(
-        webSelectedFiles.length
-          ? `Prep queued with ${webSelectedFiles.length} files.`
+        uploadedFiles.length > 0
+          ? `Files uploaded to Audio Files (${uploadedFiles.length}).`
           : "Prep queued for the selected session."
       );
       return;
@@ -222,6 +287,10 @@ export function IngestPanel() {
 
     const targetLocation = buildSessionLocation();
     try {
+      const trackNames =
+        uploadedFiles.length > 0
+          ? uploadedFiles.map((file) => file.name.replace(/\.[^/.]+$/, ""))
+          : [];
       const response = await fetch("/api/protools/project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -236,11 +305,12 @@ export function IngestPanel() {
             interleaved: true,
           },
           tracks: {
-            names: [],
+            names: trackNames,
             type: "TType_Audio",
             format: "TFormat_Stereo",
             timebase: "TTimebase_Samples",
           },
+          audioFiles: uploadedFiles,
         }),
       });
       const result = (await response.json()) as { ok: boolean; error?: string };
@@ -495,10 +565,19 @@ export function IngestPanel() {
               Review the source folder and target before running the prep.
             </p>
           </div>
-          <Button size="sm" disabled={!canPrep || prepState === "loading"} onClick={handlePrep}>
+          <Button
+            size="sm"
+            disabled={!canPrep || prepState === "loading" || uploadState === "uploading"}
+            onClick={handlePrep}
+          >
             {prepMode === "existing" ? "Prep Files" : "Create & Prep"}
           </Button>
         </div>
+        {uploadState === "uploading" ? (
+          <p className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+            Uploading files…
+          </p>
+        ) : null}
         {prepMessage ? (
           <p
             className={cn(

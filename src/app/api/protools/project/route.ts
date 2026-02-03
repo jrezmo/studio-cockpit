@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mkdir } from "fs/promises";
+import { mkdir, copyFile } from "fs/promises";
 import path from "path";
 import {
   getAllowWrites,
@@ -25,6 +25,7 @@ type ProjectRequest = {
     format: string;
     timebase: string;
   };
+  audioFiles?: Array<{ name: string; path: string }>;
 };
 
 export async function POST(request: Request) {
@@ -60,6 +61,8 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  const audioFiles = body.audioFiles ?? [];
 
   const allowWrites = getAllowWrites();
   const needsTracks = body.tracks?.names?.length > 0;
@@ -134,12 +137,40 @@ export async function POST(request: Request) {
     }
   }
 
+  if (audioFiles.length > 0) {
+    const sessionDir = path.resolve(body.session.location);
+    const audioDir = path.join(sessionDir, "Audio Files");
+    try {
+      await mkdir(audioDir, { recursive: true });
+      for (const file of audioFiles) {
+        const targetPath = path.join(audioDir, file.name);
+        await copyFile(file.path, targetPath);
+      }
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            error instanceof Error
+              ? `Unable to copy audio files: ${error.message}`
+              : "Unable to copy audio files.",
+          result: {
+            session: sessionResult.result,
+            tracks: createdTracks,
+          },
+        },
+        { status: 500 }
+      );
+    }
+  }
+
   return NextResponse.json(
     {
       ok: true,
       result: {
         session: sessionResult.result,
         tracks: createdTracks,
+        audioFilesCopied: audioFiles.length,
       },
     },
     { status: 200 }

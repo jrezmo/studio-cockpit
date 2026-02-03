@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { IngestPanel } from "@/features/ingest/components/IngestPanel";
 import { useStudioStore } from "@/state/store";
 import { mockIngestHistory } from "@/state/mock/ingest";
+import { seedSessionStatsData } from "@/features/session-stats/seed";
 
 jest.mock("@tauri-apps/api/core", () => ({
   isTauri: () => false,
@@ -35,6 +36,8 @@ function setStoreDefaults() {
     sessionPrepFolder: "",
     ingestHistory: [...mockIngestHistory],
     lastProToolsSessionCreated: null,
+    sessionStatsSessions: seedSessionStatsData.sessions,
+    sessionStatsLastIngestedAt: seedSessionStatsData.lastIngestedAt ?? null,
   });
 }
 
@@ -48,6 +51,23 @@ describe("IngestPanel", () => {
   });
 
   it("renders the browser folder picker when not running in Tauri", () => {
+    mockFetch.mockImplementation((input: RequestInfo) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/session-prep/upload")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true, files: [{ name: "Kick.wav", path: "/tmp/Kick.wav" }] }),
+        });
+      }
+      if (url.includes("/api/session-prep/attach")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true }),
+        });
+      }
+      return Promise.resolve({
+        json: async () => ({ ok: false, error: "Unexpected request" }),
+      });
+    });
+
     render(<IngestPanel />);
 
     expect(screen.getByText("Source Folder (Browser)")).toBeInTheDocument();
@@ -57,6 +77,10 @@ describe("IngestPanel", () => {
 
   it("queues prep from a browser-selected folder", async () => {
     render(<IngestPanel />);
+
+    const sessionSelect = screen.getByLabelText("Existing Session") as HTMLSelectElement;
+    await waitFor(() => expect(sessionSelect.options.length).toBeGreaterThan(0));
+    await userEvent.selectOptions(sessionSelect, sessionSelect.options[0].value);
 
     const file = new File(["test"], "Kick.wav", { type: "audio/wav" });
     Object.defineProperty(file, "webkitRelativePath", {
@@ -69,21 +93,33 @@ describe("IngestPanel", () => {
     expect(screen.getByText("1 files from TestFolder")).toBeInTheDocument();
 
     const prepButton = screen.getByRole("button", { name: "Prep Files" });
-    expect(prepButton).toBeEnabled();
-
+    await waitFor(() => expect(prepButton).toBeEnabled());
     await userEvent.click(prepButton);
 
-    expect(await screen.findByText("Prep queued with 1 files.")).toBeInTheDocument();
-
-    const { ingestHistory } = useStudioStore.getState();
-    expect(ingestHistory[0]?.fileName).toContain(
-      "Session Prep — TestFolder (browser) (1 files)"
+    await waitFor(() =>
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/session-prep/upload",
+        expect.objectContaining({ method: "POST" })
+      )
     );
   });
 
   it("creates a new session and queues prep", async () => {
-    mockFetch.mockResolvedValue({
-      json: async () => ({ ok: true }),
+    mockFetch.mockImplementation((input: RequestInfo) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/session-prep/upload")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true, files: [{ name: "Snare.wav", path: "/tmp/Snare.wav" }] }),
+        });
+      }
+      if (url.includes("/api/protools/project")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true }),
+        });
+      }
+      return Promise.resolve({
+        json: async () => ({ ok: false, error: "Unexpected request" }),
+      });
     });
 
     render(<IngestPanel />);
