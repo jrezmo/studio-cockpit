@@ -1,0 +1,315 @@
+0 verbose cli /opt/homebrew/Cellar/node/24.7.0/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.5.1
+2 info using node@v24.7.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/rezmo/dev/studio-cockpit/protools-mcp-server/.npmrc
+5 silly config load:file:/Users/rezmo/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm install
+8 verbose argv "install"
+9 verbose logfile logs-max:10 dir:/Users/rezmo/dev/studio-cockpit/.npm-cache/_logs/2026-02-02T23_27_53_617Z-
+10 verbose logfile /Users/rezmo/dev/studio-cockpit/.npm-cache/_logs/2026-02-02T23_27_53_617Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+13 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+14 silly idealTree buildDeps
+15 silly reify mark retired [
+15 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/commander'
+15 silly reify ]
+16 silly reify mark retired [
+16 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/cors'
+16 silly reify ]
+17 silly reify mark retired [
+17 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/esbuild'
+17 silly reify ]
+18 silly reify mark retired [
+18 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/fsevents'
+18 silly reify ]
+19 silly reify mark retired [
+19 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/get-tsconfig'
+19 silly reify ]
+20 silly reify mark retired [
+20 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/hono'
+20 silly reify ]
+21 silly reify mark retired [
+21 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/prettier'
+21 silly reify ]
+22 silly reify mark retired [
+22 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/tsx'
+22 silly reify ]
+23 silly reify mark retired [
+23 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/zod'
+23 silly reify ]
+24 silly reify mark retired [
+24 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/aix-ppc64'
+24 silly reify ]
+25 silly reify mark retired [
+25 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/android-arm64'
+25 silly reify ]
+26 silly reify mark retired [
+26 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/android-arm'
+26 silly reify ]
+27 silly reify mark retired [
+27 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/android-x64'
+27 silly reify ]
+28 silly reify mark retired [
+28 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/darwin-arm64'
+28 silly reify ]
+29 silly reify mark retired [
+29 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/darwin-x64'
+29 silly reify ]
+30 silly reify mark retired [
+30 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/freebsd-arm64'
+30 silly reify ]
+31 silly reify mark retired [
+31 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-arm64'
+31 silly reify ]
+32 silly reify mark retired [
+32 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-arm'
+32 silly reify ]
+33 silly reify mark retired [
+33 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-ia32'
+33 silly reify ]
+34 silly reify mark retired [
+34 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-mips64el'
+34 silly reify ]
+35 silly reify mark retired [
+35 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/freebsd-x64'
+35 silly reify ]
+36 silly reify mark retired [
+36 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-riscv64'
+36 silly reify ]
+37 silly reify mark retired [
+37 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-ppc64'
+37 silly reify ]
+38 silly reify mark retired [
+38 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-loong64'
+38 silly reify ]
+39 silly reify mark retired [
+39 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-s390x'
+39 silly reify ]
+40 silly reify mark retired [
+40 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/netbsd-arm64'
+40 silly reify ]
+41 silly reify mark retired [
+41 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/netbsd-x64'
+41 silly reify ]
+42 silly reify mark retired [
+42 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/openbsd-arm64'
+42 silly reify ]
+43 silly reify mark retired [
+43 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/openbsd-x64'
+43 silly reify ]
+44 silly reify mark retired [
+44 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/sunos-x64'
+44 silly reify ]
+45 silly reify mark retired [
+45 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/openharmony-arm64'
+45 silly reify ]
+46 silly reify mark retired [
+46 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/win32-arm64'
+46 silly reify ]
+47 silly reify mark retired [
+47 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-x64'
+47 silly reify ]
+48 silly reify mark retired [
+48 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/win32-ia32'
+48 silly reify ]
+49 silly reify mark retired [
+49 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/win32-x64'
+49 silly reify ]
+50 silly reify mark retired [
+50 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/body-parser'
+50 silly reify ]
+51 silly reify mark retired [
+51 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/cors'
+51 silly reify ]
+52 silly reify mark retired [
+52 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/connect'
+52 silly reify ]
+53 silly reify mark retired [
+53 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/express'
+53 silly reify ]
+54 silly reify mark retired [
+54 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/express-serve-static-core'
+54 silly reify ]
+55 silly reify mark retired [
+55 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/http-errors'
+55 silly reify ]
+56 silly reify mark retired [
+56 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/node'
+56 silly reify ]
+57 silly reify mark retired [
+57 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/qs'
+57 silly reify ]
+58 silly reify mark retired [
+58 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/range-parser'
+58 silly reify ]
+59 silly reify mark retired [
+59 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/serve-static'
+59 silly reify ]
+60 silly reify mark retired [
+60 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/eslint-plugin'
+60 silly reify ]
+61 silly reify mark retired [
+61 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/send'
+61 silly reify ]
+62 silly reify mark retired [
+62 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/parser'
+62 silly reify ]
+63 silly reify mark retired [
+63 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/project-service'
+63 silly reify ]
+64 silly reify mark retired [
+64 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/tsconfig-utils'
+64 silly reify ]
+65 silly reify mark retired [
+65 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/type-utils'
+65 silly reify ]
+66 silly reify mark retired [
+66 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/scope-manager'
+66 silly reify ]
+67 silly reify mark retired [
+67 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/types'
+67 silly reify ]
+68 silly reify mark retired [
+68 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/typescript-estree'
+68 silly reify ]
+69 silly reify mark retired [
+69 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/visitor-keys'
+69 silly reify ]
+70 silly reify mark retired [
+70 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/utils'
+70 silly reify ]
+71 silly reify mark retired [
+71 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/acorn',
+71 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/acorn'
+71 silly reify ]
+72 silly reify mark retired [
+72 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/eslint',
+72 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/eslint'
+72 silly reify ]
+73 silly reify mark retired [
+73 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/js-yaml',
+73 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/js-yaml'
+73 silly reify ]
+74 silly reify mark retired [
+74 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/semver',
+74 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/semver'
+74 silly reify ]
+75 silly reify mark retired [
+75 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/typescript',
+75 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/tsc',
+75 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/tsserver'
+75 silly reify ]
+76 silly reify mark retired [
+76 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/which',
+76 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/node-which'
+76 silly reify ]
+77 silly reify mark retired [
+77 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader',
+77 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/grpc-js/node_modules/.bin/proto-loader-gen-types'
+77 silly reify ]
+78 silly reify mark retired [
+78 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/proto-loader',
+78 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/proto-loader-gen-types'
+78 silly reify ]
+79 silly reify moves {
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/commander': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.commander-oowNkudF',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/cors': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.cors-xXyxjWUk',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/esbuild': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.esbuild-UFtzgU4J',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/fsevents': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.fsevents-MBERuiEC',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/get-tsconfig': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.get-tsconfig-x5NUrYzA',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/hono': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.hono-LIscjCYy',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/prettier': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.prettier-t0ZGhuC7',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/tsx': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.tsx-pVn0F60r',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/zod': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.zod-8yVwpDHe',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/aix-ppc64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.aix-ppc64-CmnJXwvS',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/android-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.android-arm64-pLUcl5Iw',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/android-arm': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.android-arm-UI3hNCn6',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/android-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.android-x64-81umWMeb',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/darwin-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.darwin-arm64-FZBJjTQX',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/darwin-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.darwin-x64-aBLg4Bph',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/freebsd-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.freebsd-arm64-tfZ3nCT2',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-arm64-oOXodtlL',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-arm': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-arm-6sIyrGB7',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-ia32': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-ia32-0xdzRjjE',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-mips64el': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-mips64el-68B2FDYF',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/freebsd-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.freebsd-x64-7KEZgaGt',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-riscv64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-riscv64-iDcv9MH7',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-ppc64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-ppc64-ASNiaqWb',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-loong64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-loong64-hLoueRkA',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-s390x': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-s390x-yMd9FSPz',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/netbsd-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.netbsd-arm64-RCHpozcy',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/netbsd-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.netbsd-x64-AmtPgsna',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/openbsd-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.openbsd-arm64-xoj4nrxy',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/openbsd-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.openbsd-x64-ib6LRad1',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/sunos-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.sunos-x64-DbwMZkLc',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/openharmony-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.openharmony-arm64-glXM7WiZ',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/win32-arm64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.win32-arm64-k8XD6dwu',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/linux-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.linux-x64-lULy3k3c',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/win32-ia32': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.win32-ia32-7HPMRCQn',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/win32-x64': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@esbuild/.win32-x64-3bWoigFk',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/body-parser': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.body-parser-7JaMKqpW',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/cors': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.cors-1tDNZ2AY',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/connect': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.connect-8zfZjgXK',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/express': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.express-JJTzlXbg',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/express-serve-static-core': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.express-serve-static-core-JsaZ1It1',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/http-errors': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.http-errors-7XT6mf1t',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/node': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.node-awiHevGn',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/qs': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.qs-rTUwTGqX',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/range-parser': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.range-parser-lu9cShaz',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/serve-static': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.serve-static-lO1xLWZo',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/eslint-plugin': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.eslint-plugin-SiSn1uxk',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/send': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@types/.send-ELwLMft2',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/parser': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.parser-GBBdau3g',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/project-service': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.project-service-vbIHAQGy',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/tsconfig-utils': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.tsconfig-utils-sHPHsQ7X',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/type-utils': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.type-utils-spAqWeet',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/scope-manager': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.scope-manager-KmSIFbBa',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/types': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.types-8kEDiyQm',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/typescript-estree': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.typescript-estree-D3vMnP7u',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/visitor-keys': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.visitor-keys-8ErS4Rda',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/utils': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.utils-7PXnOQcj',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/acorn': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.acorn-MIwrjern',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/acorn': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.acorn-0vricOhz',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/eslint': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.eslint-Fyu88lXw',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/eslint': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.eslint-ZEdAXVS8',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/js-yaml': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.js-yaml-8om3rol6',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/js-yaml': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.js-yaml-p67dlmHF',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/semver': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.semver-pbaG51ek',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/semver': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.semver-590I5Ysz',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/typescript': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.typescript-O9ZRRD6z',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/tsc': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.tsc-ToqfveN5',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/tsserver': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.tsserver-479ZNv0p',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/which': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.which-67Sx22Ly',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/node-which': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.node-which-6miqNJg2',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/grpc-js/node_modules/@grpc/.proto-loader-z0WV9UQY',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/grpc-js/node_modules/.bin/proto-loader-gen-types': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/grpc-js/node_modules/.bin/.proto-loader-gen-types-4M1XIwOp',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/proto-loader': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@grpc/.proto-loader-pCrAZNen',
+79 silly reify   '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/proto-loader-gen-types': '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/.bin/.proto-loader-gen-types-jJJH74Fv'
+79 silly reify }
+80 verbose stack Error: ENOTEMPTY: directory not empty, rename '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/visitor-keys' -> '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.visitor-keys-8ErS4Rda'
+80 verbose stack     at async Object.rename (node:internal/fs/promises:787:10)
+80 verbose stack     at async moveFile (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/fs/lib/move-file.js:30:5)
+80 verbose stack     at async Promise.allSettled (index 54)
+80 verbose stack     at async [reifyPackages] (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:332:11)
+80 verbose stack     at async Arborist.reify (/opt/homebrew/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:137:5)
+80 verbose stack     at async Install.exec (/opt/homebrew/lib/node_modules/npm/lib/commands/install.js:150:5)
+80 verbose stack     at async Npm.exec (/opt/homebrew/lib/node_modules/npm/lib/npm.js:208:9)
+80 verbose stack     at async module.exports (/opt/homebrew/lib/node_modules/npm/lib/cli/entry.js:67:5)
+81 error code ENOTEMPTY
+82 error syscall rename
+83 error path /Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/visitor-keys
+84 error dest /Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.visitor-keys-8ErS4Rda
+85 error errno -66
+86 error ENOTEMPTY: directory not empty, rename '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/visitor-keys' -> '/Users/rezmo/dev/studio-cockpit/protools-mcp-server/node_modules/@typescript-eslint/.visitor-keys-8ErS4Rda'
+87 silly unfinished npm timer reify 1770074873745
+88 silly unfinished npm timer reify:retireShallow 1770074873820
+89 verbose cwd /Users/rezmo/dev/studio-cockpit/protools-mcp-server
+90 verbose os Darwin 25.2.0
+91 verbose node v24.7.0
+92 verbose npm  v11.5.1
+93 verbose exit -66
+94 verbose code -66
+95 error A complete log of this run can be found in: /Users/rezmo/dev/studio-cockpit/.npm-cache/_logs/2026-02-02T23_27_53_617Z-debug-0.log

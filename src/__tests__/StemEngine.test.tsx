@@ -1,0 +1,16 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { StemEngine } from "@/components/stems/StemEngine";
+
+describe("StemEngine", () => {
+  it("falls back for invalid sample rate", async () => {
+    const user = userEvent.setup();
+    render(<StemEngine />);
+
+    const sampleRateInput = screen.getByLabelText("Sample Rate");
+    await user.clear(sampleRateInput);
+    await user.type(sampleRateInput, "abc");
+
+    expect(screen.getByText(/_Rate_/)).toBeInTheDocument();
+  });
+});
