@@ -4,10 +4,10 @@ import {
   readSessionStatsData,
   writeSessionStatsData,
   upsertSessionStatsSessions,
-} from "@/lib/session-stats/storage";
-import { normalizeSession } from "@/lib/session-stats/utils";
-import type { SessionStatsSession, SessionStatsData } from "@/lib/session-stats/types";
-import { sessionStatsActionSchema } from "@/lib/validation/sessionStatsSchema";
+} from "@/server/session-stats/storage";
+import { normalizeSession } from "@/features/session-stats/utils";
+import type { SessionStatsSession, SessionStatsData } from "@/features/session-stats/types";
+import { sessionStatsActionSchema } from "@/features/session-stats/validation/sessionStatsSchema";
 
 export const runtime = "nodejs";
 

@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import type { RenderOptions } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { useStudioStore } from "@/lib/store";
+import { useStudioStore } from "@/state/store";
 import type {
   Client,
   ClientCorrespondence,
@@ -9,7 +9,7 @@ import type {
   ClientSession,
   ClientTask,
   CrmData,
-} from "@/lib/crm/types";
+} from "@/features/clients/types";
 
 let idCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${++idCounter}`;

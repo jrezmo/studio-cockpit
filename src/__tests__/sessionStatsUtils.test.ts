@@ -6,8 +6,8 @@ import {
   getSessionTotals,
   normalizePluginInstance,
   normalizeSession,
-} from "@/lib/session-stats/utils";
-import type { SessionStatsSession } from "@/lib/session-stats/types";
+} from "@/features/session-stats/utils";
+import type { SessionStatsSession } from "@/features/session-stats/types";
 
 describe("session-stats utils", () => {
   it("normalizes plugin instances and derives pluginId", () => {

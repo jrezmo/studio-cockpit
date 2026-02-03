@@ -1,4 +1,4 @@
-import { formatBytes, formatSampleRate } from "@/lib/format";
+import { formatBytes, formatSampleRate } from "@/shared/format";
 
 describe("formatBytes", () => {
   it("formats zero bytes", () => {

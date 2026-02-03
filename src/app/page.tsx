@@ -1,17 +1,17 @@
 "use client";
 
-import { useStudioStore } from "@/lib/store";
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { Header } from "@/components/dashboard/Header";
-import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
-import { ClientsPanel } from "@/components/clients/ClientsPanel";
-import { IngestPanel } from "@/components/ingest/IngestPanel";
-import { StemEngine } from "@/components/stems/StemEngine";
-import { SettingsPanel } from "@/components/settings/SettingsPanel";
-import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
-import { SessionStatsPanel } from "@/components/session-stats/SessionStatsPanel";
-import { MixingWorkflowPanel } from "@/components/workflows/MixingWorkflowPanel";
-import { useIngestWatcher } from "@/hooks/useIngestWatcher";
+import { useStudioStore } from "@/state/store";
+import { Sidebar } from "@/features/dashboard/components/Sidebar";
+import { Header } from "@/features/dashboard/components/Header";
+import { DashboardPanel } from "@/features/dashboard/components/DashboardPanel";
+import { ClientsPanel } from "@/features/clients/components/ClientsPanel";
+import { IngestPanel } from "@/features/ingest/components/IngestPanel";
+import { StemEngine } from "@/features/stems/components/StemEngine";
+import { SettingsPanel } from "@/features/settings/components/SettingsPanel";
+import { ProToolsPanel } from "@/features/protools/components/ProToolsPanel";
+import { SessionStatsPanel } from "@/features/session-stats/components/SessionStatsPanel";
+import { MixingWorkflowPanel } from "@/features/workflows/components/MixingWorkflowPanel";
+import { useIngestWatcher } from "@/features/ingest/hooks/useIngestWatcher";
 
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,

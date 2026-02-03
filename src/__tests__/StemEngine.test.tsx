@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { StemEngine } from "@/components/stems/StemEngine";
+import { StemEngine } from "@/features/stems/components/StemEngine";
 
 describe("StemEngine", () => {
   it("falls back for invalid sample rate", async () => {

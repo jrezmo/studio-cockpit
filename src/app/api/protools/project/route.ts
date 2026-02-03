@@ -3,7 +3,7 @@ import {
   getAllowWrites,
   hasWritePermissions,
   runMcpTool,
-} from "@/lib/protools-mcp";
+} from "@/server/protools/mcp";
 
 export const runtime = "nodejs";
 

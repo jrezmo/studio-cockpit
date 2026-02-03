@@ -1,53 +1,56 @@
-# Application Architecture
+# Studio Cockpit Architecture Map
 
-## Overview
+This codebase is organized to keep feature work isolated, keep shared utilities discoverable, and make agent-driven work low-context.
 
-Studio Cockpit is a Next.js + Tauri desktop app with a thin API layer and a local
-SQLite database.
+## Quick Map
 
-High-level flow:
-1. UI panels render in `src/app/page.tsx` based on `activePanel`.
-2. Panels fetch data from `src/app/api/*` routes (Node runtime).
-3. API routes read/write SQLite via `src/lib/db`.
-4. Integrations (Pro Tools MCP) are accessed through API routes.
+- `src/app/`
+  - Next.js App Router entrypoints and API routes.
+- `src/features/`
+  - Feature-first layout (UI, types, utilities, validation, and seed data live together).
+  - Example: `src/features/clients/`, `src/features/session-stats/`.
+- `src/shared/`
+  - Cross-feature building blocks: UI primitives, hooks, utilities, API helpers, and shared types.
+- `src/state/`
+  - Zustand store and slice composition.
+  - Mock data lives in `src/state/mock/` to keep the store lean.
+- `src/server/`
+  - Server-only modules: database access, storage/repositories, Pro Tools MCP bridge.
 
-## State Management
+## Conventions
 
-- Central client store in `src/lib/store.ts` using Zustand with persistence.
-- Panels read from the store and hydrate via API calls on mount.
+- **Feature isolation**
+  - UI components and feature-specific types live under `src/features/<feature>/`.
+  - Feature code should avoid importing from other features unless there’s a strong reason. Prefer `src/shared/`.
 
-## Data Layer (SQLite)
+- **Shared utilities**
+  - UI primitives: `src/shared/ui/`
+  - Hooks: `src/shared/hooks/`
+  - Helpers: `src/shared/utils.ts`, `src/shared/format.ts`, `src/shared/api/`
+  - Types: `src/shared/types/`
 
-- Database path (default): `data/studio-cockpit.db`
-- Connection + migrations: `src/lib/db/index.ts`
-- CRM storage: `src/lib/crm/storage.ts`
-- Session Stats storage: `src/lib/session-stats/storage.ts`
+- **Server boundary**
+  - Server logic belongs in `src/server/`.
+  - API routes in `src/app/api/*` should call into `src/server/*` modules.
 
-## API Routes
+- **State organization**
+  - Slices live in `src/state/slices/`.
+  - Mock/seed data for the store is in `src/state/mock/`.
 
-- `/api/crm` → CRM CRUD (SQLite)
-- `/api/session-stats` → Session Stats ingest + search (SQLite)
-- `/api/protools` → MCP tool bridge (Pro Tools)
-- `/api/protools/project` → Create session + tracks (Pro Tools)
+## Documentation Zones
 
-## Panels
+- `docs/marketing/`: marketing collateral (one-sheets, ad copy, site copy). Ignore unless explicitly needed.
+- `docs/notes/`: internal working notes and plans. Ignore unless explicitly needed.
 
-- **Dashboard**: status widgets + project grid.
-- **Clients (CRM)**: logbook, board, and console views.
-- **Ingest**: watcher control, rules, recent history.
-- **Stems**: filename preview and part selection.
-- **Mixing Workflow**: step checklist per project.
-- **Session Stats**: searchable session + plugin index.
-- **Pro Tools MCP**: live session info and project creation.
-- **Settings**: editable path configuration.
+## Adding A Feature (Pattern)
 
-## Desktop Shell
+1. Create `src/features/<feature>/components/` for UI components.
+2. Add `types.ts`, `utils.ts`, `seed.ts`, or `validation/` as needed.
+3. If server storage is required, add `src/server/<feature>/` and wire API routes in `src/app/api/<feature>/`.
+4. If global state is needed, add a slice to `src/state/slices/`.
 
-- Tauri wrapper lives in `src-tauri`.
-- Web app must build successfully before Tauri packaging.
+## Import Rules (Preferred)
 
-## Samply Version Stacking
-
-A major feature of Studio Cockpit is the implementation of the "Samply Methodology" for local audio version stacking and management. This has a dedicated architecture document.
-
-See [Samply Methodology: Technical Architecture](./ARCHITECTURE_SAMPLY.md) for details.
+- UI layers: `features/*` -> `shared/*`
+- Server routes: `app/api/*` -> `server/*` + `features/*` types/validation
+- Avoid `features/*` -> `server/*`

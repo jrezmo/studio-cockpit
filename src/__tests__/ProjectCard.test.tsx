@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { ProjectCard } from "@/components/dashboard/ProjectCard";
-import type { Project } from "@/lib/types/projects";
+import { ProjectCard } from "@/features/dashboard/components/ProjectCard";
+import type { Project } from "@/shared/types/projects";
 
 const baseProject: Project = {
   id: "proj-1",

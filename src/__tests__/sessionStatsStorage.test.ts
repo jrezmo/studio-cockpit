@@ -5,8 +5,8 @@ import {
   readSessionStatsData,
   upsertSessionStatsSessions,
   writeSessionStatsData,
-} from "@/lib/session-stats/storage";
-import type { SessionStatsData, SessionStatsSession } from "@/lib/session-stats/types";
+} from "@/server/session-stats/storage";
+import type { SessionStatsData, SessionStatsSession } from "@/features/session-stats/types";
 
 describe("session-stats storage", () => {
   const originalCwd = process.cwd();

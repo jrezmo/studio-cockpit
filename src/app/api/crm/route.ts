@@ -8,7 +8,7 @@ import {
   deleteClientTaskById,
   readCrmData,
   writeCrmData,
-} from "@/lib/crm/storage";
+} from "@/server/crm/storage";
 import type {
   Client,
   ClientCorrespondence,
@@ -16,14 +16,14 @@ import type {
   ClientSession,
   ClientTask,
   CrmData,
-} from "@/lib/crm/types";
+} from "@/features/clients/types";
 import {
   clientPayloadSchema,
   correspondencePayloadSchema,
   projectPayloadSchema,
-} from "@/lib/validation/clientSchema";
-import { sessionPayloadSchema } from "@/lib/validation/sessionSchema";
-import { taskPayloadSchema } from "@/lib/validation/taskSchema";
+} from "@/features/clients/validation/clientSchema";
+import { sessionPayloadSchema } from "@/features/clients/validation/sessionSchema";
+import { taskPayloadSchema } from "@/features/clients/validation/taskSchema";
 
 export const runtime = "nodejs";
 

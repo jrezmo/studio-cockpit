@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runMcpTool, getAllowWrites } from "@/lib/protools-mcp";
+import { runMcpTool, getAllowWrites } from "@/server/protools/mcp";
 
 export const runtime = "nodejs";
 

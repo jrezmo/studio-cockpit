@@ -6,8 +6,8 @@ import {
   readCrmData,
   replaceCrmData,
   writeCrmData,
-} from "@/lib/crm/storage";
-import type { CrmData } from "@/lib/crm/types";
+} from "@/server/crm/storage";
+import type { CrmData } from "@/features/clients/types";
 
 const createCrmData = (overrides: Partial<CrmData> = {}): CrmData => ({
   clients: overrides.clients ?? [],

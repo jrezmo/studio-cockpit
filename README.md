@@ -50,9 +50,10 @@ Book a demo, request access, or start a pilot build.
 
 *   **User Guide**: `docs/user-guide.md`
 *   **Client Data Model**: `docs/CRM.md`
-*   **One-Sheet**: `docs/one-sheet.md`
+*   **Architecture Map**: `docs/ARCHITECTURE.md`
+*   **One-Sheet**: `docs/marketing/one-sheet.md`
 *   **Ad Copy**: `docs/marketing/ads.md`
-*   **Website Copy**: `docs/website-copy.md`
+*   **Website Copy**: `docs/marketing/website-copy.md`
 *   **Website**: [https://jrezmo.github.io/studio-cockpit/](https://jrezmo.github.io/studio-cockpit/)
 
 ### Tech Stack
