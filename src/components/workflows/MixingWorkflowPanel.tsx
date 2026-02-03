@@ -84,6 +84,10 @@ export function MixingWorkflowPanel() {
     if (!projectId || !activeProject) return;
     if (!steps.length) return;
 
+    const step1Done = steps.find((step) => step.id === "mix-step-1")?.status === "done";
+    const step2Done = steps.find((step) => step.id === "mix-step-2")?.status === "done";
+    const step5Done = steps.find((step) => step.id === "mix-step-5")?.status === "done";
+
     const hasProjectIngest = ingestHistory.some(
       (record) =>
         record.status === "success" &&
@@ -91,8 +95,12 @@ export function MixingWorkflowPanel() {
         record.destPath.startsWith(activeProject.folderPath)
     );
     if (hasProjectIngest) {
-      setStatus(projectId, "mix-step-1", "done");
-      setStatus(projectId, "mix-step-2", "done");
+      if (!step1Done) {
+        setStatus(projectId, "mix-step-1", "done");
+      }
+      if (!step2Done) {
+        setStatus(projectId, "mix-step-2", "done");
+      }
     }
 
     const hasAudioIngest = ingestHistory.some(
@@ -103,7 +111,7 @@ export function MixingWorkflowPanel() {
         ["wav", "aif", "aiff"].includes(record.fileType)
     );
     const step4Done = steps.find((step) => step.id === "mix-step-4")?.status === "done";
-    if (hasAudioIngest && step4Done) {
+    if (hasAudioIngest && step4Done && !step5Done) {
       setStatus(projectId, "mix-step-5", "done");
     }
   }, [projectId, activeProject, steps, ingestHistory, setStatus]);

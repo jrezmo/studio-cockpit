@@ -346,21 +346,27 @@ export const useStudioStore = create<StudioState>()(
         set((state) => {
           const steps =
             state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
+          let didChange = false;
+          const nextSteps = steps.map((step) => {
+            if (step.id !== stepId || step.status === status) {
+              return step;
+            }
+            didChange = true;
+            const now = new Date().toISOString();
+            return {
+              ...step,
+              status,
+              updatedAt: now,
+              completedAt: status === "done" ? now : undefined,
+            };
+          });
+          if (!didChange) {
+            return state;
+          }
           return {
             mixingWorkflowByProject: {
               ...state.mixingWorkflowByProject,
-              [projectId]: steps.map((step) => {
-                if (step.id !== stepId || step.status === status) {
-                  return step;
-                }
-                const now = new Date().toISOString();
-                return {
-                  ...step,
-                  status,
-                  updatedAt: now,
-                  completedAt: status === "done" ? now : undefined,
-                };
-              }),
+              [projectId]: nextSteps,
             },
           };
         }),
