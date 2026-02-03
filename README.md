@@ -1,4 +1,4 @@
-# 🚀 Studio Cockpit
+# Studio Cockpit
 
 **Mission control for modern audio production.**
 
@@ -18,26 +18,42 @@
   </a>
 </p>
 
-Studio Cockpit is a desktop-style control surface for professional audio workflows. It helps you manage file ingestion, launch sessions, print stems, and configure studio settings from a single, beautiful interface.
+Studio Cockpit unifies file ingestion, session launch, stem printing, and studio settings in one desktop interface.
+
+Studio workflows are scattered. Studio Cockpit makes them cohesive.
 
 ---
 
-### ✨ Key Features
+### Key Features
 
-*   **🎛️ Unified Dashboard**: A multi-panel dashboard for quick access to all your tools.
-*   **📂 Smart Ingest**: An Ingest Agent with history and detection rules to organize your files.
-*   **🎵 Stem Engine**: Generate standardized stem filenames with ease.
-*   **⚙️ Centralized Settings**: A persistent settings panel to manage your studio configuration.
-*   **🔌 Pro Tools MCP**: Live session info, markers, and new project creation via PTSL.
+*   **Unified Dashboard**: Quick access to every panel in one command center.
+*   **Smart Ingest**: Watch folders, apply detection rules, and track ingest history.
+*   **Sessions**: Guided launch flow with clear steps and consistent setup.
+*   **Stems**: Standardized filename generator with preview and part selection.
+*   **Mixing Workflow Prep**: Checklist-driven prep with notes.
+*   **Session Stats**: Search your archive and analyze plugin usage across sessions.
+*   **Pro Tools MCP**: Live session info, markers, and new project creation.
+*   **Centralized Settings**: One place to configure paths and studio defaults.
 
-### 📚 Documentation & Marketing
+### How It Works
+
+1.  Configure your studio paths
+2.  Ingest and organize incoming files
+3.  Launch sessions and print stems with consistency
+
+### Call to Action
+
+Book a demo, request access, or start a pilot build.
+
+### Documentation & Marketing
 
 *   **User Guide**: `docs/user-guide.md`
 *   **One-Sheet**: `docs/one-sheet.md`
 *   **Ad Copy**: `docs/marketing/ads.md`
 *   **Website Copy**: `docs/website-copy.md`
+*   **Website**: [https://jrezmo.github.io/studio-cockpit/](https://jrezmo.github.io/studio-cockpit/)
 
-### 🛠️ Tech Stack
+### Tech Stack
 
 *   [Next.js](https://nextjs.org/) & [React 19](https://react.dev/)
 *   [Tauri](https://tauri.app/) for cross-platform desktop builds
@@ -45,7 +61,7 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 *   [Tailwind CSS](https://tailwindcss.com/) for styling
 *   [Zustand](https://zustand-demo.pmnd.rs/) for state management
 
-### 🚀 Getting Started
+### Getting Started
 
 1.  **Clone the repository:**
     ```bash
@@ -62,7 +78,7 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
     ```
     Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-### 🔌 Pro Tools MCP Setup
+### Pro Tools MCP Setup
 
 Studio Cockpit can drive Pro Tools through the MCP server (PTSL gRPC). To enable it:
 
@@ -92,10 +108,10 @@ Studio Cockpit can drive Pro Tools through the MCP server (PTSL gRPC). To enable
 - `session,track_structure` enables New Project creation
 - `all` enables full write access
 
-### 🤝 Contributing
+### Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for more details on how to get started.
 
-### 📄 License
+### License
 
 This project is proprietary and all rights are reserved. See the [LICENSE](LICENSE) file for more information.
