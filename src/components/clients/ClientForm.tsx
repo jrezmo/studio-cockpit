@@ -84,7 +84,7 @@ export function ClientForm({
           <Label className="text-xs">Status</Label>
           <select
             value={values.status}
-            onChange={(event) => onUpdate("status", event.target.value)}
+            onChange={(event) => onUpdate("status", event.target.value as "active" | "at-risk" | "inactive")}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
           >
             <option value="active">active</option>

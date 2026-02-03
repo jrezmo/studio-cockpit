@@ -60,8 +60,9 @@ const crmActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("deleteProject"), payload: idSchema }),
 ]);
 
-function withId<T extends { id?: string }>(payload: T) {
-  return { ...payload, id: payload.id ?? crypto.randomUUID() };
+function withId<T>(payload: T): T & { id: string } {
+  const existing = payload as { id?: string };
+  return { ...payload, id: existing.id ?? crypto.randomUUID() };
 }
 
 function updateClientTimestamp(data: CrmData, clientId: string, timestamp: string) {

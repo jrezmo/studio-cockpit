@@ -24,6 +24,7 @@ After thorough analysis of the codebase, I've identified improvements across **8
 - Stream 3.3.1: Test utilities (`renderWithProviders`, mock helpers, data factories).
 - Stream 4.2.1 (partial): Retry logic added for CRM + session-stats API calls.
 - Stream 8.1: Implemented Tauri file watcher with routing + extraction events.
+- Stream 8.2: Full CRUD (edit/delete) for clients, projects, sessions, tasks, correspondence - API + UI.
 
 ### Partially Completed
 - Stream 1.3: Migration system with `schema_migrations` table and `001_initial.sql` (rollback support still missing).
@@ -36,6 +37,9 @@ After thorough analysis of the codebase, I've identified improvements across **8
 - Defaulted client-side API fetches to `cache: "no-store"` to avoid 304/empty JSON responses.
 - Stabilized `useFetch` callbacks to prevent refetch loops caused by inline handlers.
 - Ingest watcher wired to Tauri with real file routing/extraction + frontend event handling.
+- Fixed Tauri v2 API migration (dialog plugin, invoke from core).
+- Fixed TypeScript strict mode issues (implicit any types, type narrowing).
+- Added `@types/better-sqlite3` for proper SQLite type safety.
 
 ---
 

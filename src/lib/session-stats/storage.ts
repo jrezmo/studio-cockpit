@@ -37,8 +37,9 @@ export async function readSessionStatsData(): Promise<SessionStatsData> {
   const sessions = db
     .prepare("SELECT * FROM session_stats_sessions ORDER BY updated_at DESC, created_at DESC")
     .all()
-    .map((row) =>
-      normalizeSession({
+    .map((r) => {
+      const row = r as Record<string, unknown>;
+      return normalizeSession({
         id: row.id as string,
         fingerprint: row.fingerprint as string,
         name: row.name as string,
@@ -66,8 +67,8 @@ export async function readSessionStatsData(): Promise<SessionStatsData> {
           row.sources as string | null,
           undefined
         ),
-      })
-    );
+      });
+    });
 
   const metaRow = db
     .prepare("SELECT value FROM session_stats_meta WHERE key = 'lastIngestedAt'")

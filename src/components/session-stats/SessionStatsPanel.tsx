@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/api/dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 import { useStudioStore } from "@/lib/store";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useFetch } from "@/hooks/useFetch";
@@ -17,7 +17,7 @@ import {
 import type { SessionStatsData, SessionStatsSession } from "@/lib/session-stats/types";
 import { SessionStatsDetail } from "@/components/session-stats/SessionStatsDetail";
 import { SessionStatsIngestForm } from "@/components/session-stats/SessionStatsIngestForm";
-import { SessionStatsExtractorPanel } from "@/components/session-stats/SessionExtractorPanel";
+import { SessionExtractorPanel } from "@/components/session-stats/SessionExtractorPanel";
 import { SessionStatsList } from "@/components/session-stats/SessionStatsList";
 import { SessionStatsSearch } from "@/components/session-stats/SessionStatsSearch";
 

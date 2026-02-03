@@ -250,7 +250,7 @@ export function MixingWorkflowPanel() {
                 ? step.completedAt ?? step.updatedAt
                 : step.updatedAt;
             const hasTimestamp = Boolean(timestamp);
-            const timestampLabel = hasTimestamp
+            const timestampLabel = hasTimestamp && timestamp
               ? `${step.status === "done" ? "Completed" : "Updated"} ${formatTimestamp(
                   timestamp
                 )}`

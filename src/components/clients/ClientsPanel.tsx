@@ -269,7 +269,7 @@ export function ClientsPanel() {
         : "General";
       return {
         id: `session-${session.id}`,
-        type: "session",
+        type: "session" as const,
         title: `${session.type} · ${projectName}`,
         detail: session.notes,
         occurredAt: session.startTime,
@@ -278,7 +278,7 @@ export function ClientsPanel() {
     });
     const messageItems = activeClientCorrespondence.map((entry) => ({
       id: `message-${entry.id}`,
-      type: "message",
+      type: "message" as const,
       title: entry.subject,
       detail: entry.summary,
       occurredAt: entry.occurredAt,
@@ -288,7 +288,7 @@ export function ClientsPanel() {
       .filter((task) => task.dueAt)
       .map((task) => ({
         id: `task-${task.id}`,
-        type: "task",
+        type: "task" as const,
         title: task.title,
         detail: task.assignee ? `Assigned to ${task.assignee}` : undefined,
         occurredAt: new Date(task.dueAt ?? "").toISOString(),
