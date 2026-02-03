@@ -19,12 +19,12 @@ export function ClientOverview({
 }: ClientOverviewProps) {
   return (
     <div className="space-y-4">
+      {drillCards}
       {profileCard}
       {kpiRow}
       <p className="text-xs text-muted-foreground">
         Last touch {lastTouchLabel}
       </p>
-      {drillCards}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {sessionPlannerCard}
         {logbookTimelineCard}

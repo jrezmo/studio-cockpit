@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { Users } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/shared/utils";
 import type { Client, ClientProject } from "@/features/clients/types";
@@ -17,6 +18,7 @@ type ClientListProps = {
   clientProjects: ClientProject[];
   activeClientId: string;
   onSelectClient: (clientId: string) => void;
+  onAddClient?: () => void;
   search: string;
   onSearchChange: (value: string) => void;
   loading: boolean;
@@ -28,6 +30,7 @@ export function ClientList({
   clientProjects,
   activeClientId,
   onSelectClient,
+  onAddClient,
   search,
   onSearchChange,
   loading,
@@ -35,9 +38,16 @@ export function ClientList({
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Users className="h-4 w-4" />
-          Client List
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Client List
+          </div>
+          {onAddClient && (
+            <Button size="xs" variant="secondary" onClick={onAddClient}>
+              Add Client
+            </Button>
+          )}
         </div>
         <Input
           placeholder="Search clients..."

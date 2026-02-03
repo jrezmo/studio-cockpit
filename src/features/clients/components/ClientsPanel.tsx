@@ -27,9 +27,7 @@ import { format, formatDistanceToNow, isThisMonth } from "date-fns";
 import { ClientList } from "@/features/clients/components/ClientList";
 import { ClientForm } from "@/features/clients/components/ClientForm";
 import { ClientProfile } from "@/features/clients/components/ClientProfile";
-import { CorrespondenceLog } from "@/features/clients/components/CorrespondenceLog";
 import { SessionTimer } from "@/features/clients/components/SessionTimer";
-import { TaskBoard } from "@/features/clients/components/TaskBoard";
 import { formatBytes } from "@/shared/format";
 import { ClientDrillCards } from "@/features/clients/components/ClientDrillCards";
 import { ClientOverview } from "@/features/clients/components/ClientOverview";
@@ -38,6 +36,7 @@ import { ClientProjectView } from "@/features/clients/components/ClientProjectVi
 import { ClientProtoolsView } from "@/features/clients/components/ClientProtoolsView";
 import { ClientSessionsView } from "@/features/clients/components/ClientSessionsView";
 import { ClientWorkflowView } from "@/features/clients/components/ClientWorkflowView";
+import { WorkflowTable } from "@/features/clients/components/WorkflowTable";
 import { useClientDrill } from "@/features/clients/hooks/useClientDrill";
 
 const sessionTypeOptions: SessionType[] = [
@@ -327,16 +326,6 @@ export function ClientsPanel() {
   const openTasksCount = useMemo(
     () =>
       activeClientTasks.filter((task) => task.status !== "done").length,
-    [activeClientTasks]
-  );
-
-  const tasksByStatus = useMemo(
-    () => ({
-      todo: activeClientTasks.filter((task) => task.status === "todo"),
-      "in-progress": activeClientTasks.filter((task) => task.status === "in-progress"),
-      blocked: activeClientTasks.filter((task) => task.status === "blocked"),
-      done: activeClientTasks.filter((task) => task.status === "done"),
-    }),
     [activeClientTasks]
   );
 
@@ -799,6 +788,7 @@ export function ClientsPanel() {
       clientProjects={clientProjects}
       activeClientId={activeClient.id}
       onSelectClient={handleSelectClient}
+      onAddClient={() => setShowClientForm((prev) => !prev)}
       search={search}
       onSearchChange={setSearch}
       loading={loading}
@@ -1063,6 +1053,22 @@ export function ClientsPanel() {
     </div>
   ) : null;
 
+  const toggleTaskForm = () => {
+    if (showTaskForm && editingTask) {
+      taskForm.reset();
+      setEditingTask(null);
+    }
+    setShowTaskForm((prev) => !prev);
+  };
+
+  const toggleCorrespondenceForm = () => {
+    if (showCorrespondenceForm && editingCorrespondence) {
+      correspondenceForm.reset();
+      setEditingCorrespondence(null);
+    }
+    setShowCorrespondenceForm((prev) => !prev);
+  };
+
   const loggedSessionsList =
     clientView === "sessions"
       ? activeClientSessions
@@ -1234,21 +1240,27 @@ export function ClientsPanel() {
     </div>
   );
 
-  const correspondenceCard = (
-    <CorrespondenceLog
-      entries={activeClientCorrespondence}
-      showForm={showCorrespondenceForm}
-      onToggleForm={() => {
-        if (showCorrespondenceForm && editingCorrespondence) {
-          correspondenceForm.reset();
-          setEditingCorrespondence(null);
-        }
-        setShowCorrespondenceForm((prev) => !prev);
-      }}
-      formContent={correspondenceFormContent}
-      onEdit={handleEditCorrespondence}
-      onDelete={handleDeleteCorrespondence}
-    />
+  const workflowControls = (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold">Workflow</h3>
+          <p className="text-xs text-muted-foreground">
+            Track tasks and client messages together.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="xs" variant="secondary" onClick={toggleTaskForm}>
+            {showTaskForm ? "Close Task" : "Add Task"}
+          </Button>
+          <Button size="xs" variant="outline" onClick={toggleCorrespondenceForm}>
+            {showCorrespondenceForm ? "Close Message" : "Log Message"}
+          </Button>
+        </div>
+      </div>
+      {taskFormContent}
+      {correspondenceFormContent}
+    </div>
   );
 
   const logbookTimelineCard = (
@@ -1358,20 +1370,15 @@ export function ClientsPanel() {
     </div>
   );
 
-  const taskBoard = (
-    <TaskBoard
-      tasksByStatus={tasksByStatus}
-      showTaskForm={showTaskForm}
-      onToggleForm={() => {
-        if (showTaskForm && editingTask) {
-          taskForm.reset();
-          setEditingTask(null);
-        }
-        setShowTaskForm((prev) => !prev);
-      }}
-      onEdit={handleEditTask}
-      onDelete={handleDeleteTask}
-      formContent={taskFormContent}
+  const workflowTable = (
+    <WorkflowTable
+      tasks={activeClientTasks}
+      correspondence={activeClientCorrespondence}
+      projects={activeClientProjects}
+      onEditTask={handleEditTask}
+      onDeleteTask={handleDeleteTask}
+      onEditCorrespondence={handleEditCorrespondence}
+      onDeleteCorrespondence={handleDeleteCorrespondence}
     />
   );
 
@@ -1787,8 +1794,8 @@ export function ClientsPanel() {
   const workflowView = (
     <ClientWorkflowView
       backButton={backToOverview}
-      taskBoard={taskBoard}
-      correspondenceCard={correspondenceCard}
+      workflowControls={workflowControls}
+      workflowTable={workflowTable}
     />
   );
 
@@ -1813,25 +1820,6 @@ export function ClientsPanel() {
           <p className="text-xs text-muted-foreground">
             Artist management, project tracking, and session logging
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setShowClientForm((prev) => !prev)}
-          >
-            {showClientForm ? "Close" : "Add Client"}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setClientView("workflow");
-              setShowCorrespondenceForm(true);
-            }}
-          >
-            Log Message
-          </Button>
         </div>
       </div>
 
@@ -1862,27 +1850,7 @@ export function ClientsPanel() {
         {showClientList && leftRail}
         {hasSelectedClient ? (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Client
-                </p>
-                <select
-                  value={activeClient.id}
-                  onChange={(event) => {
-                    setActiveClientId(event.target.value);
-                    setHasSelectedClient(true);
-                    setShowClientList(false);
-                  }}
-                  className="h-8 min-w-[200px] rounded-md border border-input bg-background px-2 text-xs"
-                >
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex justify-end">
               <Button
                 size="xs"
                 variant="ghost"
