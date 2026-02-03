@@ -10,14 +10,22 @@ The goal is to answer questions like:
 - Which sessions use a given plugin?
 - What tracks and sessions exist in a specific archive?
 
-The current implementation is an in-app JSON store (`data/session-stats.json`) with an ingestion API
+The current implementation uses a local SQLite database (`data/studio-cockpit.db`) with an ingestion API
 that normalizes incoming data and derives plugin usage.
 
 ## Storage
-- Current storage file: `data/session-stats.json`
+- Current storage file: `data/studio-cockpit.db`
 - Loader/writer: `src/lib/session-stats/storage.ts`
 - Seed data: `src/lib/session-stats/seed.ts`
 - Primary API: `src/app/api/session-stats/route.ts`
+
+### Tables
+Session Stats currently stores normalized session JSON in SQLite:
+- `session_stats_sessions`
+- `session_stats_meta` (stores `lastIngestedAt`)
+
+Legacy note:
+- If `data/session-stats.json` exists, it is imported into SQLite the first time the DB is created.
 
 ## Data Model
 Source of truth types live in `src/lib/session-stats/types.ts`.

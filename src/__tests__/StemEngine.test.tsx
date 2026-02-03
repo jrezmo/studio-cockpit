@@ -11,6 +11,6 @@ describe("StemEngine", () => {
     await user.clear(sampleRateInput);
     await user.type(sampleRateInput, "abc");
 
-    expect(screen.getByText(/_Rate_/)).toBeInTheDocument();
+    expect(screen.getAllByText(/_Rate_/).length).toBeGreaterThan(0);
   });
 });

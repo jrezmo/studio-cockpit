@@ -26,7 +26,7 @@ describe("session-stats storage", () => {
     const data = await readSessionStatsData();
     expect(data.sessions.length).toBeGreaterThan(0);
 
-    const filePath = path.join(tempDir, "data", "session-stats.json");
+    const filePath = path.join(tempDir, "data", "studio-cockpit.db");
     const exists = await fs
       .access(filePath)
       .then(() => true)
