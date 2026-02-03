@@ -9,12 +9,14 @@ import { IngestPanel } from "@/components/ingest/IngestPanel";
 import { StemEngine } from "@/components/stems/StemEngine";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
+import { CodexPanel } from "@/components/codex/CodexPanel";
 
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,
   clients: ClientsPanel,
   ingest: IngestPanel,
   stems: StemEngine,
+  codex: CodexPanel,
   settings: SettingsPanel,
   protools: ProToolsPanel,
 };

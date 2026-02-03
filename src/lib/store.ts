@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { seedCrmData } from "@/lib/crm/seed";
+import { seedCodexData } from "@/lib/codex/seed";
 import type {
   Client,
   ClientCorrespondence,
@@ -9,6 +10,7 @@ import type {
   ClientTask,
   CrmData,
 } from "@/lib/crm/types";
+import type { CodexData, CodexSession } from "@/lib/codex/types";
 
 export type ProjectStatus = "active" | "mixing" | "review" | "delivered";
 export type IngestStatus = "success" | "pending" | "error";
@@ -18,7 +20,8 @@ export type Panel =
   | "ingest"
   | "stems"
   | "settings"
-  | "protools";
+  | "protools"
+  | "codex";
 export type ClientsView = "logbook" | "board" | "console";
 
 export interface Project {
@@ -76,6 +79,11 @@ interface StudioState {
   setCrmData: (data: CrmData) => void;
   clientsView: ClientsView;
   setClientsView: (view: ClientsView) => void;
+
+  // Codex
+  codexSessions: CodexSession[];
+  codexLastIngestedAt: string | null;
+  setCodexData: (data: CodexData) => void;
 
   // UI
   activePanel: Panel;
@@ -224,6 +232,13 @@ export const useStudioStore = create<StudioState>()(
         })),
       clientsView: "logbook",
       setClientsView: (view) => set({ clientsView: view }),
+      codexSessions: seedCodexData.sessions,
+      codexLastIngestedAt: seedCodexData.lastIngestedAt ?? null,
+      setCodexData: (data) =>
+        set({
+          codexSessions: data.sessions,
+          codexLastIngestedAt: data.lastIngestedAt ?? null,
+        }),
       activePanel: "dashboard",
       setActivePanel: (panel) => set({ activePanel: panel }),
       sidebarCollapsed: false,
