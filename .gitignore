@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/protools-mcp-server
 /.pnp
 .pnp.*
 .yarn/*

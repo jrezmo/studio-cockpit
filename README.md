@@ -112,6 +112,7 @@ Then open `http://localhost:3000` and click the **Pro Tools** panel in the sideb
    npm install
    npm run build
    ```
+   Note: `protools-mcp-server/` is ignored by this repo to keep Git history clean.
 2. Download the Pro Tools Scripting Library SDK and locate `PTSL.proto`.
 3. Export the environment variables listed above.
 4. Ensure Pro Tools is running.
