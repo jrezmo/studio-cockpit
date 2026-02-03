@@ -4,12 +4,13 @@ The Pro Tools MCP (Media Control Protocol) panel allows Studio Cockpit to intera
 
 ## One-time setup
 
-1.  Clone and build the MCP server (sibling to this repo):
+1.  Clone and build the MCP server (inside this repo):
     ```bash
-    git clone https://github.com/skrul/protools-mcp-server.git ../protools-mcp-server
-    cd ../protools-mcp-server
+    git clone https://github.com/skrul/protools-mcp-server.git ./protools-mcp-server
+    cd protools-mcp-server
     npm install
     npm run build
+    cd ..
     ```
     Note: `protools-mcp-server/` is ignored by this repo to keep Git history clean.
 2.  Download the Pro Tools Scripting Library SDK and locate `PTSL.proto`.

@@ -38,7 +38,7 @@ export function resolveMcpPath() {
 
   const fallback = path.resolve(
     process.cwd(),
-    "../protools-mcp-server/dist/index.js"
+    "./protools-mcp-server/dist/index.js"
   );
   if (existsSync(fallback)) return fallback;
 

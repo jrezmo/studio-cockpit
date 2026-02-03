@@ -45,3 +45,9 @@ High-level flow:
 
 - Tauri wrapper lives in `src-tauri`.
 - Web app must build successfully before Tauri packaging.
+
+## Samply Version Stacking
+
+A major feature of Studio Cockpit is the implementation of the "Samply Methodology" for local audio version stacking and management. This has a dedicated architecture document.
+
+See [Samply Methodology: Technical Architecture](./ARCHITECTURE_SAMPLY.md) for details.

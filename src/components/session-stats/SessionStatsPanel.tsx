@@ -88,6 +88,11 @@ export function SessionStatsPanel() {
 
 
   useEffect(() => {
+    // Only set up Tauri listeners when running in the Tauri desktop app
+    if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+      return;
+    }
+
     let unlistenExtracted: (() => void) | undefined;
     let unlistenFinished: (() => void) | undefined;
     let unlistenError: (() => void) | undefined;
@@ -213,6 +218,12 @@ export function SessionStatsPanel() {
   }
 
   async function handleExtract() {
+    // Only available in Tauri desktop app
+    if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+      setExtractMessage("Folder extraction is only available in the desktop app.");
+      return;
+    }
+
     const selected = await open({
       directory: true,
       multiple: false,

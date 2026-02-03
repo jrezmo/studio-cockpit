@@ -34,3 +34,11 @@ Milestones:
 2. Schema versioning + migration runner.
 3. Background jobs (ingest, session indexing).
 4. Safe backup/export tools.
+
+## Phase 4: Samply Version Stacking
+
+Goals:
+- Implement the "Samply Methodology" for local audio version stacking, management, and DAW integration.
+
+Milestones:
+- See the detailed [Samply Methodology: Implementation Roadmap](./ROADMAP_SAMPLY.md) for the full breakdown of this feature.
