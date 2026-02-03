@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { ChangeEvent } from "react";
 import { usePathDialog } from "@/shared/hooks/usePathDialog";
 import { useStudioStore } from "@/state/store";
 import { formatBytes } from "@/shared/format";
@@ -275,8 +274,7 @@ export function IngestPanel() {
     }
   }
 
-  function handleWebFolderChange(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
+  function handleWebFolderChange(files: File[]) {
     setWebSelectedFiles(files);
   }
 
