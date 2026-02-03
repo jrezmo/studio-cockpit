@@ -18,6 +18,7 @@ Studio Cockpit brings those workflows together in one desktop control surface.
 ## Core Features
 - Unified multi-panel dashboard
 - Smart Ingest with rules and history
+- Mixing workflow prep checklist
 - Guided session launch
 - Stem filename engine
 - Pro Tools MCP integration

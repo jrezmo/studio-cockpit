@@ -17,6 +17,7 @@ import type {
 
 export type ProjectStatus = "active" | "mixing" | "review" | "delivered";
 export type IngestStatus = "success" | "pending" | "error";
+export type WorkflowStepStatus = "todo" | "inProgress" | "done";
 export type Panel =
   | "dashboard"
   | "clients"
@@ -24,7 +25,8 @@ export type Panel =
   | "stems"
   | "settings"
   | "protools"
-  | "sessionStats";
+  | "sessionStats"
+  | "mixingWorkflow";
 export type ClientsView = "logbook" | "board" | "console";
 
 export interface Project {
@@ -58,6 +60,15 @@ export interface Settings {
   stemsOutputPath: string;
 }
 
+export interface WorkflowStep {
+  id: string;
+  title: string;
+  detail: string;
+  status: WorkflowStepStatus;
+  updatedAt?: string;
+  completedAt?: string;
+}
+
 interface StudioState {
   // Projects
   projects: Project[];
@@ -87,6 +98,17 @@ interface StudioState {
   sessionStatsSessions: SessionStatsSession[];
   sessionStatsLastIngestedAt: string | null;
   setSessionStatsData: (data: SessionStatsData) => void;
+
+  // Mixing Workflow
+  mixingWorkflowByProject: Record<string, WorkflowStep[]>;
+  activeMixingWorkflowProjectId: string;
+  setActiveMixingWorkflowProjectId: (projectId: string) => void;
+  setMixingWorkflowStepStatus: (
+    projectId: string,
+    stepId: string,
+    status: WorkflowStepStatus
+  ) => void;
+  resetMixingWorkflow: (projectId: string) => void;
 
   // UI
   activePanel: Panel;
@@ -199,6 +221,59 @@ const mockIngestHistory: IngestRecord[] = [
   },
 ];
 
+const createMixingWorkflowSteps = (): WorkflowStep[] => [
+  {
+    id: "mix-step-1",
+    title: "Collect source files",
+    detail:
+      "Download audio files and the Pro Tools session from the transfer service.",
+    status: "todo",
+  },
+  {
+    id: "mix-step-2",
+    title: "Place files in artist folder",
+    detail:
+      "Unzip and move to the artist folder on the session drive (waves go in Uploaded Tracks).",
+    status: "todo",
+  },
+  {
+    id: "mix-step-3",
+    title: "Clear downloads",
+    detail:
+      "Delete the original download so Pro Tools won’t reference the wrong location.",
+    status: "todo",
+  },
+  {
+    id: "mix-step-4",
+    title: "Create new session",
+    detail:
+      "Start a new Pro Tools session with the correct sample rate and mix template I/O.",
+    status: "todo",
+  },
+  {
+    id: "mix-step-5",
+    title: "Import audio",
+    detail: "Import WAVs into the new session.",
+    status: "todo",
+  },
+  {
+    id: "mix-step-6",
+    title: "Import template routing",
+    detail:
+      "Import session data from the mix template (routing, I/O, and recurring settings).",
+    status: "todo",
+  },
+  {
+    id: "mix-step-7",
+    title: "Organize multitracks",
+    detail:
+      "Route and move tracks into their folders (kick in/out, drums, etc.) before mixing.",
+    status: "todo",
+  },
+];
+
+const createMixingWorkflowsByProject = (projects: Project[]) =>
+  Object.fromEntries(projects.map((project) => [project.id, createMixingWorkflowSteps()]));
 
 export const useStudioStore = create<StudioState>()(
   persist(
@@ -242,6 +317,39 @@ export const useStudioStore = create<StudioState>()(
           sessionStatsSessions: data.sessions,
           sessionStatsLastIngestedAt: data.lastIngestedAt ?? null,
         }),
+      mixingWorkflowByProject: createMixingWorkflowsByProject(mockProjects),
+      activeMixingWorkflowProjectId: mockProjects[0]?.id ?? "",
+      setActiveMixingWorkflowProjectId: (projectId) =>
+        set({ activeMixingWorkflowProjectId: projectId }),
+      setMixingWorkflowStepStatus: (projectId, stepId, status) =>
+        set((state) => {
+          const steps =
+            state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
+          return {
+            mixingWorkflowByProject: {
+              ...state.mixingWorkflowByProject,
+              [projectId]: steps.map((step) => {
+                if (step.id !== stepId || step.status === status) {
+                  return step;
+                }
+                const now = new Date().toISOString();
+                return {
+                  ...step,
+                  status,
+                  updatedAt: now,
+                  completedAt: status === "done" ? now : undefined,
+                };
+              }),
+            },
+          };
+        }),
+      resetMixingWorkflow: (projectId) =>
+        set((state) => ({
+          mixingWorkflowByProject: {
+            ...state.mixingWorkflowByProject,
+            [projectId]: createMixingWorkflowSteps(),
+          },
+        })),
       activePanel: "dashboard",
       setActivePanel: (panel) => set({ activePanel: panel }),
       sidebarCollapsed: false,

@@ -10,12 +10,14 @@ import { StemEngine } from "@/components/stems/StemEngine";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
 import { SessionStatsPanel } from "@/components/session-stats/SessionStatsPanel";
+import { MixingWorkflowPanel } from "@/components/workflows/MixingWorkflowPanel";
 
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,
   clients: ClientsPanel,
   ingest: IngestPanel,
   stems: StemEngine,
+  mixingWorkflow: MixingWorkflowPanel,
   sessionStats: SessionStatsPanel,
   settings: SettingsPanel,
   protools: ProToolsPanel,

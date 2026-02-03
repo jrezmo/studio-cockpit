@@ -7,6 +7,7 @@ const panelTitles: Record<string, string> = {
   clients: "Clients",
   ingest: "Ingest Agent",
   stems: "Stem Engine",
+  mixingWorkflow: "Mixing Workflow",
   sessionStats: "Session Stats",
   settings: "Settings",
   protools: "Pro Tools",

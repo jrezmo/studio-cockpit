@@ -9,12 +9,14 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 1. Open Studio Cockpit.
 2. Use the Settings panel to confirm your studio paths.
 3. Use the Ingest panel to watch or organize incoming files.
-4. Launch sessions from the Sessions panel.
-5. Create stems in the Stems panel.
+4. Track mix prep in the Mixing Workflow panel.
+5. Launch sessions from the Sessions panel.
+6. Create stems in the Stems panel.
 
 ## Core Panels
 - Dashboard: Status widgets and project grid for a quick daily overview.
 - Ingest: Watcher control, detection rules, and ingest history.
+- Mixing Workflow: Joel's mix prep checklist tied to each project.
 - Sessions: Guided launch flow with stepper for creating or opening sessions.
 - Stems: Standardized stem filename preview and part selection.
 - Session Stats: Search sessions and analyze track and plugin usage.
@@ -23,10 +25,11 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 
 ## Typical Workflow
 1. Receive files and run Smart Ingest to organize them.
-2. Launch a new session from the Sessions panel.
-3. Work in Pro Tools with live context in the MCP panel.
-4. Print stems and export with standardized names.
-5. Review Session Stats for archive and plugin insights.
+2. Track mix prep in the Mixing Workflow panel.
+3. Launch a new session from the Sessions panel.
+4. Work in Pro Tools with live context in the MCP panel.
+5. Print stems and export with standardized names.
+6. Review Session Stats for archive and plugin insights.
 
 ## Pro Tools MCP Setup (Advanced)
 1. Install and build the Pro Tools MCP server.

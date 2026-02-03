@@ -10,6 +10,7 @@ import {
   PlugZap,
   Users,
   BookOpen,
+  ListChecks,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems: { id: Panel; label: string; icon: React.ElementType }[] = [
   { id: "clients", label: "Clients", icon: Users },
   { id: "ingest", label: "Ingest Agent", icon: FolderInput },
   { id: "stems", label: "Stem Engine", icon: AudioLines },
+  { id: "mixingWorkflow", label: "Mixing Workflow", icon: ListChecks },
   { id: "sessionStats", label: "Session Stats", icon: BookOpen },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "protools", label: "Pro Tools", icon: PlugZap },
