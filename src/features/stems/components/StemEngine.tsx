@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Button } from "@/shared/ui/button";
-import { AudioLines, Copy, Printer } from "lucide-react";
+import { Badge } from "@/shared/ui/badge";
+import { Separator } from "@/shared/ui/separator";
+import { useStudioStore } from "@/state/store";
+import { AudioLines, Copy, Printer, HardDrive, Play } from "lucide-react";
+
+type StemBounceResponse = {
+  ok: boolean;
+  error?: string;
+  result?: unknown;
+};
 
 const defaultParts = [
   "Full Mix",
@@ -21,12 +30,31 @@ const defaultParts = [
 ];
 
 export function StemEngine() {
+  const settings = useStudioStore((s) => s.settings);
   const [songTitle, setSongTitle] = useState("");
   const [selectedParts, setSelectedParts] = useState<string[]>(
     defaultParts.slice(0, 6)
   );
-  const [sampleRate, setSampleRate] = useState("48000");
+  const [sessionPath, setSessionPath] = useState("");
+  const [outputDirectory, setOutputDirectory] = useState(
+    settings.stemsOutputPath
+  );
+  const [sampleRate, setSampleRate] = useState("SRate_48000");
+  const [bitDepth, setBitDepth] = useState("BDepth_24");
+  const [exportFormat, setExportFormat] = useState("EFormat_Interleaved");
+  const [fileType, setFileType] = useState("EMFType_WAV");
+  const [mixSourceType, setMixSourceType] = useState("EMSType_Bus");
+  const [mixSourceName, setMixSourceName] = useState("Mix Bus");
+  const [stemSources, setStemSources] = useState<Record<string, string>>(() =>
+    Object.fromEntries(defaultParts.slice(0, 6).map((part) => [part, part]))
+  );
+  const [offlineBounce, setOfflineBounce] = useState(true);
   const [bpm, setBpm] = useState("124");
+  const [status, setStatus] = useState<"idle" | "loading" | "error" | "ok">(
+    "idle"
+  );
+  const [message, setMessage] = useState<string>("");
+  const [printLog, setPrintLog] = useState<string[]>([]);
 
   function togglePart(part: string) {
     setSelectedParts((prev) =>
@@ -36,20 +64,165 @@ export function StemEngine() {
 
   const sanitized = songTitle.replace(/\s+/g, "").replace(/[^a-zA-Z0-9]/g, "");
 
+  function sampleRateToKhzLabel(value: string) {
+    const match = value.match(/\d+/);
+    const parsed = match ? Number.parseInt(match[0], 10) : Number.NaN;
+    if (!Number.isFinite(parsed)) return "Rate";
+    return parsed % 1000 === 0
+      ? `${parsed / 1000}k`
+      : `${(parsed / 1000).toFixed(1)}k`;
+  }
+
+  function fileTypeExtension(value: string) {
+    switch (value) {
+      case "EMFType_AIFF":
+        return "aif";
+      case "EMFType_MP3":
+        return "mp3";
+      case "EMFType_WAV":
+      default:
+        return "wav";
+    }
+  }
+
   function generateFilename(part: string) {
     const partClean = part.replace(/\s+/g, "");
-    const parsedRate = Number.parseInt(sampleRate, 10);
-    const rateKhz = Number.isFinite(parsedRate)
-      ? parsedRate % 1000 === 0
-        ? `${parsedRate / 1000}k`
-        : `${(parsedRate / 1000).toFixed(1)}k`
-      : "Rate";
-    return `${sanitized || "SongTitle"}_${partClean}_${rateKhz}_${bpm || "BPM"}.wav`;
+    const rateKhz = sampleRateToKhzLabel(sampleRate);
+    return `${sanitized || "SongTitle"}_${partClean}_${rateKhz}_${bpm || "BPM"}.${fileTypeExtension(
+      fileType
+    )}`;
   }
+
+  async function callStemBounce(payload: Record<string, unknown>) {
+    const response = await fetch("/api/protools/stems", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    return (await response.json()) as StemBounceResponse;
+  }
+
+  const canOpenSession = Boolean(sessionPath.trim().length > 0);
+  const canPrint = Boolean(
+    songTitle.trim().length > 0 &&
+      selectedParts.length > 0 &&
+      outputDirectory.trim().length > 0 &&
+      mixSourceName.trim().length > 0 &&
+      selectedParts.every(
+        (part) => (stemSources[part] ?? mixSourceName).trim().length > 0
+      )
+  );
+
+  const filenamePreview = useMemo(
+    () => selectedParts.map((part) => generateFilename(part)),
+    [selectedParts, sampleRate, bpm, songTitle, fileType]
+  );
+
+  useEffect(() => {
+    setStemSources((prev) => {
+      const next = { ...prev };
+      selectedParts.forEach((part) => {
+        if (!next[part]) {
+          next[part] = part;
+        }
+      });
+      Object.keys(next).forEach((part) => {
+        if (!selectedParts.includes(part)) {
+          delete next[part];
+        }
+      });
+      return next;
+    });
+  }, [selectedParts]);
 
   return (
     <div className="space-y-6">
-      {/* Song info */}
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">Pro Tools Session</h2>
+            <p className="text-xs text-muted-foreground">
+              Choose a Pro Tools session and output folder for stem bounces.
+            </p>
+          </div>
+          <Badge
+            variant={status === "error" ? "destructive" : "secondary"}
+            className={status === "ok" ? "bg-green-500/15 text-green-500" : ""}
+          >
+            {status === "idle" && "Idle"}
+            {status === "loading" && "Working"}
+            {status === "ok" && "Ready"}
+            {status === "error" && "Error"}
+          </Badge>
+        </div>
+        {message && (
+          <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {message}
+          </p>
+        )}
+        <Separator />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <div className="space-y-1.5">
+            <Label htmlFor="stem-session-path" className="text-xs">
+              Session Path (.ptx)
+            </Label>
+            <Input
+              id="stem-session-path"
+              value={sessionPath}
+              onChange={(e) => setSessionPath(e.target.value)}
+              placeholder="/Volumes/Studio/Sessions/Project/Song.ptx"
+              className="font-mono text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="stem-output-dir" className="text-xs">
+              Output Folder
+            </Label>
+            <Input
+              id="stem-output-dir"
+              value={outputDirectory}
+              onChange={(e) => setOutputDirectory(e.target.value)}
+              placeholder={settings.stemsOutputPath}
+              className="font-mono text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="gap-2"
+            disabled={!canOpenSession}
+            onClick={async () => {
+              setStatus("loading");
+              setMessage("");
+              const result = await callStemBounce({
+                action: "open",
+                sessionPath,
+              });
+              if (result.ok) {
+                setStatus("ok");
+                setMessage("");
+                setPrintLog((prev) => [
+                  `Opened session: ${sessionPath}`,
+                  ...prev,
+                ]);
+              } else {
+                setStatus("error");
+                setMessage(result.error || "Failed to open session.");
+              }
+            }}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Open in Pro Tools
+          </Button>
+          <p className="text-[10px] text-muted-foreground">
+            Requires PROTOOLS_ALLOW_WRITES to include session permissions.
+          </p>
+        </div>
+      </div>
+
       <div className="rounded-lg border border-border bg-card p-5">
         <h2 className="mb-4 text-sm font-semibold">Song Information</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -69,12 +242,17 @@ export function StemEngine() {
             <Label htmlFor="stem-rate" className="text-xs">
               Sample Rate
             </Label>
-            <Input
+            <select
               id="stem-rate"
               value={sampleRate}
               onChange={(e) => setSampleRate(e.target.value)}
-              className="font-mono text-sm"
-            />
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+            >
+              <option value="SRate_44100">44.1 kHz</option>
+              <option value="SRate_48000">48 kHz</option>
+              <option value="SRate_88200">88.2 kHz</option>
+              <option value="SRate_96000">96 kHz</option>
+            </select>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="stem-bpm" className="text-xs">
@@ -90,7 +268,128 @@ export function StemEngine() {
         </div>
       </div>
 
-      {/* Parts checklist */}
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold">Bounce Settings</h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="stem-filetype" className="text-xs">
+              File Type
+            </Label>
+            <select
+              id="stem-filetype"
+              value={fileType}
+              onChange={(e) => setFileType(e.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+            >
+              <option value="EMFType_WAV">WAV</option>
+              <option value="EMFType_AIFF">AIFF</option>
+              <option value="EMFType_MP3">MP3</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="stem-bit-depth" className="text-xs">
+              Bit Depth
+            </Label>
+            <select
+              id="stem-bit-depth"
+              value={bitDepth}
+              onChange={(e) => setBitDepth(e.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+            >
+              <option value="BDepth_16">16-bit</option>
+              <option value="BDepth_24">24-bit</option>
+              <option value="BDepth_32Float">32-bit float</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="stem-export-format" className="text-xs">
+              Export Format
+            </Label>
+            <select
+              id="stem-export-format"
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+            >
+              <option value="EFormat_Interleaved">Interleaved</option>
+              <option value="EFormat_Mono">Mono</option>
+              <option value="EFormat_MultipleMono">Multiple Mono</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="stem-mix-source-type" className="text-xs">
+              Mix Source Type
+            </Label>
+            <select
+              id="stem-mix-source-type"
+              value={mixSourceType}
+              onChange={(e) => setMixSourceType(e.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+            >
+              <option value="EMSType_Output">Output</option>
+              <option value="EMSType_Bus">Bus</option>
+              <option value="EMSType_PhysicalOut">Physical Out</option>
+              <option value="EMSType_Renderer">Renderer</option>
+            </select>
+          </div>
+          <div className="space-y-1.5 lg:col-span-2">
+            <Label htmlFor="stem-mix-source-name" className="text-xs">
+              Default Mix Source Name
+            </Label>
+            <Input
+              id="stem-mix-source-name"
+              value={mixSourceName}
+              onChange={(e) => setMixSourceName(e.target.value)}
+              placeholder="Mix Bus"
+              className="font-mono text-sm"
+            />
+          </div>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Checkbox
+            checked={offlineBounce}
+            onCheckedChange={(value) => setOfflineBounce(Boolean(value))}
+          />
+          Offline bounce (faster than real time)
+        </label>
+        <p className="text-[10px] text-muted-foreground">
+          Each stem uses the mix source name shown below. Default is the part
+          name (ex: “Inst”).
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold">Stem Sources</h2>
+          <p className="text-xs text-muted-foreground">
+            Map each selected stem to a bus/output name inside the session.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {selectedParts.map((part) => (
+            <div key={part} className="space-y-1.5">
+              <Label htmlFor={`stem-source-${part}`} className="text-xs">
+                {part}
+              </Label>
+              <Input
+                id={`stem-source-${part}`}
+                value={stemSources[part] ?? ""}
+                onChange={(e) =>
+                  setStemSources((prev) => ({
+                    ...prev,
+                    [part]: e.target.value,
+                  }))
+                }
+                placeholder={part}
+                className="font-mono text-sm"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="rounded-lg border border-border bg-card p-5">
         <h2 className="mb-4 text-sm font-semibold">Parts to Print</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
@@ -109,13 +408,20 @@ export function StemEngine() {
         </div>
       </div>
 
-      {/* Filename preview */}
       <div className="rounded-lg border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold">
             Filename Preview ({selectedParts.length} files)
           </h2>
-          <Button size="sm" variant="outline" className="gap-2 text-xs">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 text-xs"
+            onClick={async () => {
+              if (filenamePreview.length === 0) return;
+              await navigator.clipboard.writeText(filenamePreview.join("\n"));
+            }}
+          >
             <Copy className="h-3 w-3" />
             Copy All
           </Button>
@@ -126,29 +432,92 @@ export function StemEngine() {
               Select at least one part to preview filenames
             </p>
           ) : (
-            selectedParts.map((part) => (
+            filenamePreview.map((fileName) => (
               <div
-                key={part}
+                key={fileName}
                 className="flex items-center gap-2 text-xs font-mono"
               >
                 <AudioLines className="h-3 w-3 text-primary shrink-0" />
-                <span className="text-foreground">{generateFilename(part)}</span>
+                <span className="text-foreground">{fileName}</span>
               </div>
             ))
           )}
         </div>
       </div>
 
-      {/* Action */}
       <div className="flex justify-end">
         <Button
-          disabled={!songTitle || selectedParts.length === 0}
+          disabled={!canPrint}
           className="gap-2"
+          onClick={async () => {
+            setStatus("loading");
+            setMessage("");
+            setPrintLog([]);
+            const parts = selectedParts.map((part) => ({
+              label: part,
+              fileName: generateFilename(part),
+              sourceName: stemSources[part] ?? mixSourceName,
+            }));
+            const result = await callStemBounce({
+              action: "print",
+              sessionPath,
+              openSession: Boolean(sessionPath),
+              outputDirectory,
+              mixSource: {
+                type: mixSourceType,
+                name: mixSourceName,
+              },
+              audio: {
+                fileType,
+                sampleRate,
+                bitDepth,
+                exportFormat,
+                deliveryFormat: "EMDFormat_SingleFile",
+                offlineBounce,
+              },
+              parts,
+            });
+            if (result.ok) {
+              setStatus("ok");
+              setMessage("");
+              const results = (result.result as {
+                results?: Array<{ label: string; ok: boolean; error?: string }>;
+              })?.results;
+              if (results?.length) {
+                setPrintLog(
+                  results.map((item) =>
+                    item.ok
+                      ? `Printed ${item.label}`
+                      : `Failed ${item.label}: ${item.error ?? "Unknown error"}`
+                  )
+                );
+              } else {
+                setPrintLog(["Stem printing completed."]);
+              }
+            } else {
+              setStatus("error");
+              setMessage(result.error || "Stem print failed.");
+            }
+          }}
         >
           <Printer className="h-3.5 w-3.5" />
           Print Stems ({selectedParts.length})
         </Button>
       </div>
+
+      {printLog.length > 0 && (
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-3 text-sm font-semibold">
+            <HardDrive className="h-4 w-4 text-muted-foreground" />
+            Print Log
+          </div>
+          <div className="space-y-1 text-xs font-mono text-muted-foreground">
+            {printLog.map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
