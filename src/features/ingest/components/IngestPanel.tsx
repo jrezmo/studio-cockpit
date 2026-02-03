@@ -306,40 +306,38 @@ export function IngestPanel() {
 
         <Separator />
 
-        <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-          <div className="space-y-2">
-            <Label htmlFor="session-prep-folder" className="text-xs">
-              Source Folder
-            </Label>
-            <Input
-              id="session-prep-folder"
-              value={sessionPrepFolder}
-              onChange={(event) => setSessionPrepFolder(event.target.value)}
-              placeholder={settings.downloadsPath}
-              className="font-mono text-sm"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              {supportsDialog
-                ? "Select the folder containing the files you want to prep."
-                : "Use the folder picker below when running in the browser."}
-            </p>
+        {supportsDialog ? (
+          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+            <div className="space-y-2">
+              <Label htmlFor="session-prep-folder" className="text-xs">
+                Source Folder
+              </Label>
+              <Input
+                id="session-prep-folder"
+                value={sessionPrepFolder}
+                onChange={(event) => setSessionPrepFolder(event.target.value)}
+                placeholder={settings.downloadsPath}
+                className="font-mono text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Select the folder containing the files you want to prep.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="w-full md:w-auto"
+              onClick={handleBrowse}
+            >
+              <FolderInput className="mr-2 h-4 w-4" />
+              Browse
+            </Button>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            className="w-full md:w-auto"
-            onClick={handleBrowse}
-            disabled={!supportsDialog}
-          >
-            <FolderInput className="mr-2 h-4 w-4" />
-            Browse
-          </Button>
-        </div>
-        {!supportsDialog && (
-          <div className="rounded-md border border-border bg-secondary/40 px-3 py-2">
-            <Label htmlFor="session-prep-folder-web" className="text-[10px] uppercase tracking-wide">
-              Browser Folder Picker
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="session-prep-folder-web" className="text-xs">
+              Source Folder (Browser)
             </Label>
             <input
               id="session-prep-folder-web"
@@ -349,15 +347,15 @@ export function IngestPanel() {
               webkitdirectory="true"
               multiple
               onChange={handleWebFolderChange}
-              className="mt-2 w-full text-xs"
+              className="w-full text-xs"
             />
-            <p className="mt-2 text-[10px] text-muted-foreground">
+            <p className="text-[10px] text-muted-foreground">
               {webSelectedFiles.length
                 ? `Selected ${webSelectedFiles.length} file(s) from ${webFolderLabel}.`
                 : "Select a local folder to attach its files."}
             </p>
             {webSelectedFiles.length > 0 && (
-              <div className="mt-2 space-y-1 text-[10px] text-muted-foreground">
+              <div className="space-y-1 text-[10px] text-muted-foreground">
                 {webSelectedFiles.slice(0, 6).map((file) => (
                   <p key={file.name + file.size} className="truncate font-mono">
                     {file.webkitRelativePath || file.name}
