@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ClientTask } from "@/lib/crm/types";
 
@@ -7,6 +8,8 @@ type TaskBoardProps = {
   showTaskForm: boolean;
   onToggleForm: () => void;
   formContent: ReactNode;
+  onEdit?: (task: ClientTask) => void;
+  onDelete?: (taskId: string) => void;
 };
 
 export function TaskBoard({
@@ -14,6 +17,8 @@ export function TaskBoard({
   showTaskForm,
   onToggleForm,
   formContent,
+  onEdit,
+  onDelete,
 }: TaskBoardProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-5 space-y-4">
@@ -42,9 +47,33 @@ export function TaskBoard({
               {tasksByStatus[column.key].map((task) => (
                 <div
                   key={task.id}
-                  className="rounded-md border border-border bg-secondary/40 px-2.5 py-2 text-xs"
+                  className="group rounded-md border border-border bg-secondary/40 px-2.5 py-2 text-xs"
                 >
-                  <p className="font-semibold">{task.title}</p>
+                  <div className="flex items-start justify-between gap-1">
+                    <p className="font-semibold">{task.title}</p>
+                    <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                      {onEdit && (
+                        <button
+                          type="button"
+                          onClick={() => onEdit(task)}
+                          className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          title="Edit task"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          type="button"
+                          onClick={() => onDelete(task.id)}
+                          className="rounded p-0.5 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                          title="Delete task"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <p className="text-[10px] text-muted-foreground">
                     {task.assignee ?? "Unassigned"}
                     {task.dueAt ? ` · due ${task.dueAt}` : ""}

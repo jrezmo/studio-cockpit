@@ -18,3 +18,7 @@ export const sessionPayloadSchema = z.object({
   billableRate: z.coerce.number().nonnegative().optional(),
   notes: z.string().max(5000).optional(),
 });
+
+export const updateSessionSchema = sessionPayloadSchema.extend({
+  id: z.string().min(1),
+});

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStudioStore } from "@/lib/store";
-import type { SessionType, CrmData } from "@/lib/crm/types";
+import type { SessionType, CrmData, ClientTask, ClientSession, ClientCorrespondence, Client, ClientProject } from "@/lib/crm/types";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useFetch } from "@/hooks/useFetch";
 import { useFormState } from "@/hooks/useFormState";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Timer, Mail, ClipboardList } from "lucide-react";
+import { Timer, Mail, ClipboardList, Pencil, Trash2 } from "lucide-react";
 import { format, formatDistanceToNow, isThisMonth } from "date-fns";
 import { ClientList } from "@/components/clients/ClientList";
 import { ClientForm } from "@/components/clients/ClientForm";
@@ -119,7 +119,9 @@ export function ClientsPanel() {
   const [manualEnd, setManualEnd] = useState("");
   const [manualNotes, setManualNotes] = useState("");
   const [logError, setLogError] = useState("");
+  const [editingSession, setEditingSession] = useState<ClientSession | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<ClientTask | null>(null);
   const taskForm = useFormState({
     title: "",
     status: "todo" as "todo" | "in-progress" | "blocked" | "done",
@@ -128,6 +130,7 @@ export function ClientsPanel() {
     projectId: "",
   });
   const [showCorrespondenceForm, setShowCorrespondenceForm] = useState(false);
+  const [editingCorrespondence, setEditingCorrespondence] = useState<ClientCorrespondence | null>(null);
   const correspondenceForm = useFormState({
     channel: "email" as "email" | "sms" | "call" | "note",
     direction: "inbound" as "inbound" | "outbound",
@@ -136,6 +139,14 @@ export function ClientsPanel() {
     occurredAt: "",
   });
   const [showClientForm, setShowClientForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [editingProject, setEditingProject] = useState<ClientProject | null>(null);
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    status: "active" as "active" | "mixing" | "review" | "delivered",
+    dueDate: "",
+  });
   const clientForm = useFormState({
     name: "",
     contact: "",
@@ -398,8 +409,144 @@ export function ClientsPanel() {
     });
     if (saved) {
       taskForm.reset();
+      setEditingTask(null);
       setShowTaskForm(false);
     }
+  };
+
+  const handleEditTask = (task: ClientTask) => {
+    setEditingTask(task);
+    taskForm.update("title", task.title);
+    taskForm.update("status", task.status);
+    taskForm.update("dueAt", task.dueAt ?? "");
+    taskForm.update("assignee", task.assignee ?? "");
+    taskForm.update("projectId", task.projectId ?? "");
+    setShowTaskForm(true);
+  };
+
+  const handleUpdateTask = async () => {
+    if (!editingTask || !taskForm.values.title.trim()) {
+      setLogError("Add a task title before saving.");
+      return;
+    }
+    setLogError("");
+    const saved = await postCrmAction("updateTask", {
+      id: editingTask.id,
+      clientId: editingTask.clientId,
+      projectId: taskForm.values.projectId || undefined,
+      title: taskForm.values.title.trim(),
+      status: taskForm.values.status,
+      dueAt: taskForm.values.dueAt || undefined,
+      assignee: taskForm.values.assignee || undefined,
+    });
+    if (saved) {
+      taskForm.reset();
+      setEditingTask(null);
+      setShowTaskForm(false);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    setLogError("");
+    await postCrmAction("deleteTask", { id: taskId });
+  };
+
+  const handleEditSession = (session: ClientSession) => {
+    setEditingSession(session);
+    setManualMode("range");
+    setManualType(session.type);
+    setManualProjectId(session.projectId ?? "");
+    setManualStart(session.startTime.slice(0, 16));
+    setManualEnd(session.endTime.slice(0, 16));
+    setManualNotes(session.notes ?? "");
+  };
+
+  const handleUpdateSession = async () => {
+    if (!editingSession || !activeClient) return;
+    const startDate = new Date(manualStart);
+    const endDate = new Date(manualEnd);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      setLogError("Invalid start or end time.");
+      return;
+    }
+    const durationMinutes = Math.round(
+      (endDate.getTime() - startDate.getTime()) / 60000
+    );
+    if (durationMinutes <= 0) {
+      setLogError("End time must be after start time.");
+      return;
+    }
+    setLogError("");
+    const saved = await postCrmAction("updateSession", {
+      id: editingSession.id,
+      clientId: editingSession.clientId,
+      projectId: manualProjectId || undefined,
+      type: manualType,
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      durationMinutes,
+      billableRate: editingSession.billableRate,
+      notes: manualNotes.trim() || undefined,
+    });
+    if (saved) {
+      setEditingSession(null);
+      setManualStart("");
+      setManualEnd("");
+      setManualNotes("");
+    }
+  };
+
+  const handleCancelEditSession = () => {
+    setEditingSession(null);
+    setManualStart("");
+    setManualEnd("");
+    setManualNotes("");
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    setLogError("");
+    await postCrmAction("deleteSession", { id: sessionId });
+  };
+
+  const handleEditCorrespondence = (entry: ClientCorrespondence) => {
+    setEditingCorrespondence(entry);
+    correspondenceForm.update("channel", entry.channel);
+    correspondenceForm.update("direction", entry.direction);
+    correspondenceForm.update("subject", entry.subject);
+    correspondenceForm.update("summary", entry.summary);
+    correspondenceForm.update("occurredAt", entry.occurredAt.slice(0, 16));
+    setShowCorrespondenceForm(true);
+  };
+
+  const handleUpdateCorrespondence = async () => {
+    if (!editingCorrespondence || !correspondenceForm.values.subject.trim()) {
+      setLogError("Add a subject before saving the message.");
+      return;
+    }
+    setLogError("");
+    const occurredAt = correspondenceForm.values.occurredAt
+      ? new Date(correspondenceForm.values.occurredAt).toISOString()
+      : editingCorrespondence.occurredAt;
+    const saved = await postCrmAction("updateCorrespondence", {
+      id: editingCorrespondence.id,
+      clientId: editingCorrespondence.clientId,
+      channel: correspondenceForm.values.channel,
+      direction: correspondenceForm.values.direction,
+      subject: correspondenceForm.values.subject.trim(),
+      summary: correspondenceForm.values.summary.trim() || "Logged message",
+      occurredAt,
+      participants: editingCorrespondence.participants,
+    });
+    if (saved) {
+      correspondenceForm.reset();
+      setEditingCorrespondence(null);
+      setShowCorrespondenceForm(false);
+    }
+  };
+
+  const handleDeleteCorrespondence = async (entryId: string) => {
+    setLogError("");
+    await postCrmAction("deleteCorrespondence", { id: entryId });
   };
 
   const handleAddCorrespondence = async () => {
@@ -449,8 +596,97 @@ export function ClientsPanel() {
     });
     if (saved) {
       clientForm.reset();
+      setEditingClient(null);
       setShowClientForm(false);
     }
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    clientForm.update("name", client.name);
+    clientForm.update("contact", client.primaryContact);
+    clientForm.update("email", client.email);
+    clientForm.update("phone", client.phone ?? "");
+    clientForm.update("rate", String(client.ratePerHour));
+    clientForm.update("status", client.status);
+    setShowClientForm(true);
+  };
+
+  const handleUpdateClient = async () => {
+    if (
+      !editingClient ||
+      !clientForm.values.name.trim() ||
+      !clientForm.values.contact.trim() ||
+      !clientForm.values.email.trim()
+    ) {
+      setLogError("Client name, contact, and email are required.");
+      return;
+    }
+    setLogError("");
+    const saved = await postCrmAction("updateClient", {
+      id: editingClient.id,
+      name: clientForm.values.name.trim(),
+      primaryContact: clientForm.values.contact.trim(),
+      email: clientForm.values.email.trim(),
+      phone: clientForm.values.phone.trim() || undefined,
+      ratePerHour: Number.parseFloat(clientForm.values.rate) || 0,
+      status: clientForm.values.status,
+      tags: editingClient.tags,
+      lastContactAt: editingClient.lastContactAt,
+      nextSessionAt: editingClient.nextSessionAt,
+      notes: editingClient.notes,
+    });
+    if (saved) {
+      clientForm.reset();
+      setEditingClient(null);
+      setShowClientForm(false);
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    setLogError("");
+    await postCrmAction("deleteClient", { id: clientId });
+    if (activeClientId === clientId) {
+      setActiveClientId(clients.find((c) => c.id !== clientId)?.id ?? "");
+    }
+  };
+
+  const handleEditProject = (project: ClientProject) => {
+    setEditingProject(project);
+    setProjectForm({
+      name: project.name,
+      status: project.status,
+      dueDate: project.dueDate?.slice(0, 10) ?? "",
+    });
+    setShowProjectForm(true);
+  };
+
+  const handleUpdateProject = async () => {
+    if (!editingProject || !projectForm.name.trim()) {
+      setLogError("Project name is required.");
+      return;
+    }
+    setLogError("");
+    const saved = await postCrmAction("updateProject", {
+      id: editingProject.id,
+      clientId: editingProject.clientId,
+      name: projectForm.name.trim(),
+      status: projectForm.status,
+      dueDate: projectForm.dueDate || undefined,
+      protoolsProjectId: editingProject.protoolsProjectId,
+      lastSessionAt: editingProject.lastSessionAt,
+      totalLoggedMinutes: editingProject.totalLoggedMinutes,
+    });
+    if (saved) {
+      setProjectForm({ name: "", status: "active", dueDate: "" });
+      setEditingProject(null);
+      setShowProjectForm(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    setLogError("");
+    await postCrmAction("deleteProject", { id: projectId });
   };
 
   if (!activeClient) {
@@ -499,6 +735,63 @@ export function ClientsPanel() {
     </div>
   );
 
+  const projectEditForm = showProjectForm && editingProject ? (
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold">Edit Project</h4>
+        <Button
+          size="xs"
+          variant="ghost"
+          onClick={() => {
+            setProjectForm({ name: "", status: "active", dueDate: "" });
+            setEditingProject(null);
+            setShowProjectForm(false);
+          }}
+        >
+          Cancel
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="space-y-1">
+          <Label className="text-[10px]">Name</Label>
+          <Input
+            value={projectForm.name}
+            onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px]">Status</Label>
+          <select
+            value={projectForm.status}
+            onChange={(e) =>
+              setProjectForm({
+                ...projectForm,
+                status: e.target.value as "active" | "mixing" | "review" | "delivered",
+              })
+            }
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="active">active</option>
+            <option value="mixing">mixing</option>
+            <option value="review">review</option>
+            <option value="delivered">delivered</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px]">Due Date</Label>
+          <Input
+            type="date"
+            value={projectForm.dueDate}
+            onChange={(e) => setProjectForm({ ...projectForm, dueDate: e.target.value })}
+          />
+        </div>
+      </div>
+      <Button size="xs" onClick={handleUpdateProject}>
+        Update Project
+      </Button>
+    </div>
+  ) : null;
+
   const clientProfileCard = (
     <ClientProfile
       client={activeClient}
@@ -507,6 +800,10 @@ export function ClientsPanel() {
       clientsView={clientsView}
       statusClassName={clientStatusStyles[activeClient.status]}
       formatDuration={formatDuration}
+      onEdit={handleEditClient}
+      onDelete={handleDeleteClient}
+      onEditProject={handleEditProject}
+      onDeleteProject={handleDeleteProject}
     />
   );
 
@@ -570,9 +867,24 @@ export function ClientsPanel() {
           />
         </div>
       </div>
-      <Button size="xs" onClick={handleAddTask}>
-        Save Task
-      </Button>
+      <div className="flex gap-2">
+        <Button size="xs" onClick={editingTask ? handleUpdateTask : handleAddTask}>
+          {editingTask ? "Update Task" : "Save Task"}
+        </Button>
+        {editingTask && (
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={() => {
+              taskForm.reset();
+              setEditingTask(null);
+              setShowTaskForm(false);
+            }}
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
     </div>
   ) : null;
 
@@ -640,9 +952,24 @@ export function ClientsPanel() {
           />
         </div>
       </div>
-      <Button size="xs" onClick={handleAddCorrespondence}>
-        Save Entry
-      </Button>
+      <div className="flex gap-2">
+        <Button size="xs" onClick={editingCorrespondence ? handleUpdateCorrespondence : handleAddCorrespondence}>
+          {editingCorrespondence ? "Update Entry" : "Save Entry"}
+        </Button>
+        {editingCorrespondence && (
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={() => {
+              correspondenceForm.reset();
+              setEditingCorrespondence(null);
+              setShowCorrespondenceForm(false);
+            }}
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
     </div>
   ) : null;
 
@@ -690,6 +1017,68 @@ export function ClientsPanel() {
           {activeClientSessions.length} total
         </Badge>
       </div>
+      {editingSession && (
+        <div className="rounded-md border border-border bg-secondary/20 p-3 space-y-2">
+          <p className="text-xs font-semibold">Edit Session</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px]">Start</Label>
+              <Input
+                type="datetime-local"
+                value={manualStart}
+                onChange={(e) => setManualStart(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">End</Label>
+              <Input
+                type="datetime-local"
+                value={manualEnd}
+                onChange={(e) => setManualEnd(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px]">Type</Label>
+              <select
+                value={manualType}
+                onChange={(e) => setManualType(e.target.value as SessionType)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {sessionTypeOptions.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Project</Label>
+              <select
+                value={manualProjectId}
+                onChange={(e) => setManualProjectId(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">General</option>
+                {activeClientProjects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px]">Notes</Label>
+            <Input
+              value={manualNotes}
+              onChange={(e) => setManualNotes(e.target.value)}
+              placeholder="Session notes..."
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button size="xs" onClick={handleUpdateSession}>Update</Button>
+            <Button size="xs" variant="ghost" onClick={handleCancelEditSession}>Cancel</Button>
+          </div>
+        </div>
+      )}
       <div className="space-y-2">
         {activeClientSessions.slice(0, 6).map((session) => {
           const project = clientProjects.find(
@@ -698,10 +1087,10 @@ export function ClientsPanel() {
           return (
             <div
               key={session.id}
-              className="rounded-md bg-secondary/30 px-3 py-2 text-xs"
+              className="group rounded-md bg-secondary/30 px-3 py-2 text-xs"
             >
               <div className="flex items-center justify-between gap-2">
-                <div>
+                <div className="flex-1">
                   <p className="font-semibold">
                     {session.type} · {project?.name ?? "General"}
                   </p>
@@ -710,9 +1099,29 @@ export function ClientsPanel() {
                     {formatDuration(session.durationMinutes)}
                   </p>
                 </div>
-                <Badge variant="secondary" className="text-[10px]">
-                  ${session.billableRate ?? activeClient.ratePerHour}/hr
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => handleEditSession(session)}
+                      className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      title="Edit session"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSession(session.id)}
+                      className="rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                      title="Delete session"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px]">
+                    ${session.billableRate ?? activeClient.ratePerHour}/hr
+                  </Badge>
+                </div>
               </div>
               {session.notes && (
                 <p className="mt-1 text-[10px] text-muted-foreground">
@@ -769,8 +1178,16 @@ export function ClientsPanel() {
     <CorrespondenceLog
       entries={activeClientCorrespondence}
       showForm={showCorrespondenceForm}
-      onToggleForm={() => setShowCorrespondenceForm((prev) => !prev)}
+      onToggleForm={() => {
+        if (showCorrespondenceForm && editingCorrespondence) {
+          correspondenceForm.reset();
+          setEditingCorrespondence(null);
+        }
+        setShowCorrespondenceForm((prev) => !prev);
+      }}
       formContent={correspondenceFormContent}
+      onEdit={handleEditCorrespondence}
+      onDelete={handleDeleteCorrespondence}
     />
   );
 
@@ -885,7 +1302,15 @@ export function ClientsPanel() {
     <TaskBoard
       tasksByStatus={tasksByStatus}
       showTaskForm={showTaskForm}
-      onToggleForm={() => setShowTaskForm((prev) => !prev)}
+      onToggleForm={() => {
+        if (showTaskForm && editingTask) {
+          taskForm.reset();
+          setEditingTask(null);
+        }
+        setShowTaskForm((prev) => !prev);
+      }}
+      onEdit={handleEditTask}
+      onDelete={handleDeleteTask}
       formContent={taskFormContent}
     />
   );
@@ -947,6 +1372,7 @@ export function ClientsPanel() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-4">
             {clientProfileCard}
+            {projectEditForm}
             {logbookTimelineCard}
             {loggedSessionsCard}
           </div>
@@ -967,6 +1393,7 @@ export function ClientsPanel() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
             {clientProfileCard}
+            {projectEditForm}
             {sessionPlannerCard}
           </div>
           <div className="space-y-4">
@@ -985,6 +1412,7 @@ export function ClientsPanel() {
       <div className="space-y-4">
         {kpiRow}
         {clientProfileCard}
+        {projectEditForm}
         {consoleTabs}
         {consoleContent}
       </div>
@@ -1040,8 +1468,13 @@ export function ClientsPanel() {
         visible={showClientForm}
         values={clientForm.values}
         onUpdate={(key, value) => clientForm.update(key, value)}
-        onClose={() => setShowClientForm(false)}
-        onSave={handleAddClient}
+        onClose={() => {
+          clientForm.reset();
+          setEditingClient(null);
+          setShowClientForm(false);
+        }}
+        onSave={editingClient ? handleUpdateClient : handleAddClient}
+        isEditing={!!editingClient}
       />
 
       {loadingError && (

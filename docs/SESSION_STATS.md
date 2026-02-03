@@ -131,6 +131,25 @@ If a session is ingested with tracks + plugin instances but no `plugins` summary
 the system derives `plugins` by counting instances across tracks.
 
 ## Ingestion
+
+### Using the PTX Extractor Script
+
+This project includes a script to extract session information from a `.ptx` file and generate the required JSON for ingestion.
+
+**Usage:**
+
+```bash
+npm run extract <path-to-your-session.ptx>
+```
+
+**Example:**
+
+```bash
+npm run extract /Users/rezmo/Documents/Pro Tools/Sessions/MySong.ptx > session.json
+```
+
+This will create a `session.json` file in your current directory. You can then copy the contents of this file and paste it into the "Ingest Sessions" form in the Session Stats panel.
+
 ### API
 `POST /api/session-stats`
 

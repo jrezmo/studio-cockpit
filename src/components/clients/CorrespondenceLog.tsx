@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Mail, MessageSquare, Phone } from "lucide-react";
+import { Mail, MessageSquare, Phone, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ type CorrespondenceLogProps = {
   showForm: boolean;
   onToggleForm: () => void;
   formContent: ReactNode;
+  onEdit?: (entry: ClientCorrespondence) => void;
+  onDelete?: (entryId: string) => void;
 };
 
 export function CorrespondenceLog({
@@ -17,6 +19,8 @@ export function CorrespondenceLog({
   showForm,
   onToggleForm,
   formContent,
+  onEdit,
+  onDelete,
 }: CorrespondenceLogProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-5 space-y-4">
@@ -40,7 +44,7 @@ export function CorrespondenceLog({
           return (
             <div
               key={item.id}
-              className="rounded-md bg-secondary/30 px-3 py-2 text-xs"
+              className="group rounded-md bg-secondary/30 px-3 py-2 text-xs"
             >
               <div className="flex items-center gap-2">
                 <Icon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -51,9 +55,33 @@ export function CorrespondenceLog({
                     {format(new Date(item.occurredAt), "MMM d, h:mma")}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                  {item.channel}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(item)}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        title="Edit entry"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(item.id)}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                        title="Delete entry"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">
+                    {item.channel}
+                  </Badge>
+                </div>
               </div>
               <p className="mt-1 text-[10px] text-muted-foreground">
                 {item.summary}

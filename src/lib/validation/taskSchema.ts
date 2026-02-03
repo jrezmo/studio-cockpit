@@ -15,3 +15,7 @@ export const taskPayloadSchema = z.object({
   dueAt: z.string().min(1).optional(),
   assignee: z.string().min(1).max(120).optional(),
 });
+
+export const updateTaskSchema = taskPayloadSchema.extend({
+  id: z.string().min(1),
+});

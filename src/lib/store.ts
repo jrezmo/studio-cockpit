@@ -34,6 +34,8 @@ type IngestSlice = {
   ingestHistory: IngestRecord[];
   ingestWatcherActive: boolean;
   setIngestWatcherActive: (active: boolean) => void;
+  addIngestRecord: (record: IngestRecord) => void;
+  setIngestHistory: (records: IngestRecord[]) => void;
 };
 
 type SettingsSlice = {
@@ -266,6 +268,11 @@ const createIngestSlice: SliceCreator<IngestSlice> = (set) => ({
   ingestHistory: mockIngestHistory,
   ingestWatcherActive: true,
   setIngestWatcherActive: (active) => set({ ingestWatcherActive: active }),
+  addIngestRecord: (record) =>
+    set((state) => ({
+      ingestHistory: [record, ...state.ingestHistory].slice(0, 200),
+    })),
+  setIngestHistory: (records) => set({ ingestHistory: records }),
 });
 
 const createSettingsSlice: SliceCreator<SettingsSlice> = (set) => ({

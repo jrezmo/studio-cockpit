@@ -47,3 +47,21 @@ export const correspondencePayloadSchema = z.object({
   occurredAt: z.string().min(1),
   participants: z.array(z.string().min(1).max(120)).default([]),
 });
+
+// Update schemas (require id)
+export const updateClientSchema = clientPayloadSchema.extend({
+  id: z.string().min(1),
+});
+
+export const updateProjectSchema = projectPayloadSchema.extend({
+  id: z.string().min(1),
+});
+
+export const updateCorrespondenceSchema = correspondencePayloadSchema.extend({
+  id: z.string().min(1),
+});
+
+// Delete schema (just id)
+export const deleteByIdSchema = z.object({
+  id: z.string().min(1),
+});

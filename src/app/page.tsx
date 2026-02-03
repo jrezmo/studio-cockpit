@@ -11,6 +11,7 @@ import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
 import { SessionStatsPanel } from "@/components/session-stats/SessionStatsPanel";
 import { MixingWorkflowPanel } from "@/components/workflows/MixingWorkflowPanel";
+import { useIngestWatcher } from "@/hooks/useIngestWatcher";
 
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,
@@ -24,6 +25,7 @@ const panels: Record<string, React.ComponentType> = {
 };
 
 export default function Home() {
+  useIngestWatcher();
   const activePanel = useStudioStore((s) => s.activePanel);
   const ActivePanelComponent = panels[activePanel] || DashboardPanel;
 

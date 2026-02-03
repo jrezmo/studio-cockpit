@@ -20,6 +20,7 @@ type ClientFormProps = {
   ) => void;
   onClose: () => void;
   onSave: () => void;
+  isEditing?: boolean;
 };
 
 export function ClientForm({
@@ -28,6 +29,7 @@ export function ClientForm({
   onUpdate,
   onClose,
   onSave,
+  isEditing = false,
 }: ClientFormProps) {
   if (!visible) return null;
 
@@ -35,9 +37,9 @@ export function ClientForm({
     <div className="rounded-lg border border-border bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">New Client</h3>
+          <h3 className="text-sm font-semibold">{isEditing ? "Edit Client" : "New Client"}</h3>
           <p className="text-xs text-muted-foreground">
-            Add a client record to start tracking work.
+            {isEditing ? "Update client details." : "Add a client record to start tracking work."}
           </p>
         </div>
         <Button size="xs" variant="outline" onClick={onClose}>
@@ -92,7 +94,7 @@ export function ClientForm({
         </div>
       </div>
       <Button size="sm" onClick={onSave}>
-        Save Client
+        {isEditing ? "Update Client" : "Save Client"}
       </Button>
     </div>
   );
