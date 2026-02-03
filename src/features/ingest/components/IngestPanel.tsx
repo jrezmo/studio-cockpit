@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
-import { isTauri } from "@tauri-apps/api/core";
+import { usePathDialog } from "@/shared/hooks/usePathDialog";
 import { useStudioStore } from "@/state/store";
 import { formatBytes } from "@/shared/format";
 import { formatDistanceToNow } from "date-fns";
@@ -13,9 +12,10 @@ import { Label } from "@/shared/ui/label";
 import { Badge } from "@/shared/ui/badge";
 import { Separator } from "@/shared/ui/separator";
 import { cn } from "@/shared/utils";
+import { PathPickerField } from "@/shared/ui/path-picker";
+import { WebFolderPicker } from "@/shared/ui/path-picker-web";
 import {
   FolderOpen,
-  FolderInput,
   Link2,
   Sparkles,
   FileAudio,
@@ -74,7 +74,7 @@ export function IngestPanel() {
   );
   const [prepMessage, setPrepMessage] = useState("");
 
-  const supportsDialog = typeof window !== "undefined" && isTauri();
+  const { supportsDialog, pickPath } = usePathDialog();
 
   const sortedSessions = useMemo(() => {
     return [...sessionStatsSessions].sort((a, b) => {
@@ -269,9 +269,8 @@ export function IngestPanel() {
   }
 
   async function handleBrowse() {
-    if (!supportsDialog) return;
-    const selection = await open({ directory: true, multiple: false });
-    if (typeof selection === "string") {
+    const selection = await pickPath({ selectType: "directory" });
+    if (selection) {
       setSessionPrepFolder(selection);
     }
   }
@@ -307,81 +306,27 @@ export function IngestPanel() {
         <Separator />
 
         {supportsDialog ? (
-          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-            <div className="space-y-2">
-              <Label htmlFor="session-prep-folder" className="text-xs">
-                Source Folder
-              </Label>
-              <Input
-                id="session-prep-folder"
-                value={sessionPrepFolder}
-                onChange={(event) => setSessionPrepFolder(event.target.value)}
-                placeholder={settings.downloadsPath}
-                className="font-mono text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Select the folder containing the files you want to prep.
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              className="w-full md:w-auto"
-              onClick={handleBrowse}
-            >
-              <FolderInput className="mr-2 h-4 w-4" />
-              Browse
-            </Button>
-          </div>
+          <PathPickerField
+            id="session-prep-folder"
+            label="Source Folder"
+            value={sessionPrepFolder}
+            placeholder={settings.downloadsPath}
+            description="Select the folder containing the files you want to prep."
+            selectType="directory"
+            onChange={setSessionPrepFolder}
+          />
         ) : (
-          <div className="space-y-2">
-            <Label htmlFor="session-prep-folder-web" className="text-xs">
-              Source Folder (Browser)
-            </Label>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="sm" variant="secondary">
-                <label htmlFor="session-prep-folder-web" className="cursor-pointer">
-                  <FolderInput className="mr-2 h-4 w-4" />
-                  Choose Folder
-                </label>
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {webSelectedFiles.length
-                  ? `${webSelectedFiles.length} files from ${webFolderLabel}`
-                  : "No folder selected"}
-              </span>
-            </div>
-            <input
-              id="session-prep-folder-web"
-              type="file"
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore - non-standard webkitdirectory for folder selection
-              webkitdirectory="true"
-              multiple
-              onChange={handleWebFolderChange}
-              className="sr-only"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              {webSelectedFiles.length
+          <WebFolderPicker
+            id="session-prep-folder-web"
+            label="Source Folder (Browser)"
+            description={
+              webSelectedFiles.length
                 ? `Selected ${webSelectedFiles.length} file(s) from ${webFolderLabel}.`
-                : "Select a local folder to attach its files."}
-            </p>
-            {webSelectedFiles.length > 0 && (
-              <div className="space-y-1 text-[10px] text-muted-foreground">
-                {webSelectedFiles.slice(0, 6).map((file) => (
-                  <p key={file.name + file.size} className="truncate font-mono">
-                    {file.webkitRelativePath || file.name}
-                  </p>
-                ))}
-                {webSelectedFiles.length > 6 ? (
-                  <p className="text-[10px] text-muted-foreground">
-                    + {webSelectedFiles.length - 6} more files
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </div>
+                : "Select a local folder to attach its files."
+            }
+            onFilesChange={handleWebFolderChange}
+            showFilePreview
+          />
         )}
       </div>
 

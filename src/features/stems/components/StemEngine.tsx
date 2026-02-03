@@ -7,6 +7,9 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Separator } from "@/shared/ui/separator";
+import { PathPickerField } from "@/shared/ui/path-picker";
+import { WebFolderPicker } from "@/shared/ui/path-picker-web";
+import { usePathDialog } from "@/shared/hooks/usePathDialog";
 import { useStudioStore } from "@/state/store";
 import { AudioLines, Copy, Printer, HardDrive, Play } from "lucide-react";
 
@@ -31,6 +34,7 @@ const defaultParts = [
 
 export function StemEngine() {
   const settings = useStudioStore((s) => s.settings);
+  const { supportsDialog } = usePathDialog();
   const [songTitle, setSongTitle] = useState("");
   const [selectedParts, setSelectedParts] = useState<string[]>(
     defaultParts.slice(0, 6)
@@ -55,6 +59,7 @@ export function StemEngine() {
   );
   const [message, setMessage] = useState<string>("");
   const [printLog, setPrintLog] = useState<string[]>([]);
+  const [webSessionFiles, setWebSessionFiles] = useState<File[]>([]);
 
   function togglePart(part: string) {
     setSelectedParts((prev) =>
@@ -136,6 +141,17 @@ export function StemEngine() {
     });
   }, [selectedParts]);
 
+  useEffect(() => {
+    if (!sessionPath) return;
+    if (!outputDirectory || outputDirectory === settings.stemsOutputPath) {
+      const normalized = sessionPath.replace(/\\/g, "/");
+      const sessionDir = normalized.slice(0, normalized.lastIndexOf("/"));
+      if (sessionDir) {
+        setOutputDirectory(`${sessionDir}/Stems`);
+      }
+    }
+  }, [sessionPath, outputDirectory, settings.stemsOutputPath]);
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-border bg-card p-5 space-y-4">
@@ -162,31 +178,49 @@ export function StemEngine() {
           </p>
         )}
         <Separator />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
-          <div className="space-y-1.5">
-            <Label htmlFor="stem-session-path" className="text-xs">
-              Session Path (.ptx)
-            </Label>
-            <Input
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {supportsDialog ? (
+            <PathPickerField
               id="stem-session-path"
+              label="Session Path (.ptx)"
               value={sessionPath}
-              onChange={(e) => setSessionPath(e.target.value)}
               placeholder="/Volumes/Studio/Sessions/Project/Song.ptx"
-              className="font-mono text-sm"
+              description="Select the Pro Tools session to open."
+              selectType="file"
+              filters={[{ name: "Pro Tools Session", extensions: ["ptx"] }]}
+              onChange={setSessionPath}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="stem-output-dir" className="text-xs">
-              Output Folder
-            </Label>
-            <Input
-              id="stem-output-dir"
-              value={outputDirectory}
-              onChange={(e) => setOutputDirectory(e.target.value)}
-              placeholder={settings.stemsOutputPath}
-              className="font-mono text-sm"
+          ) : (
+            <WebFolderPicker
+              id="stem-session-web"
+              label="Session Folder (Browser)"
+              description={
+                webSessionFiles.length
+                  ? `Selected ${webSessionFiles.length} file(s).`
+                  : "Select the folder containing the .ptx file."
+              }
+              onFilesChange={(files) => {
+                setWebSessionFiles(files);
+                const sessionFile = files.find((file) =>
+                  file.name.toLowerCase().endsWith(".ptx")
+                );
+                if (sessionFile?.webkitRelativePath) {
+                  const root = sessionFile.webkitRelativePath.split("/")[0];
+                  setSessionPath(`${root}/${sessionFile.name}`);
+                }
+              }}
+              showFilePreview
             />
-          </div>
+          )}
+          <PathPickerField
+            id="stem-output-dir"
+            label="Output Folder"
+            value={outputDirectory}
+            placeholder={settings.stemsOutputPath}
+            description="Choose where bounced stems should land."
+            selectType="directory"
+            onChange={setOutputDirectory}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
