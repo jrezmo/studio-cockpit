@@ -19,6 +19,7 @@ export type Panel =
   | "stems"
   | "settings"
   | "protools";
+export type ClientsView = "logbook" | "board" | "console";
 
 export interface Project {
   id: string;
@@ -73,6 +74,8 @@ interface StudioState {
   activeClientId: string;
   setActiveClientId: (clientId: string) => void;
   setCrmData: (data: CrmData) => void;
+  clientsView: ClientsView;
+  setClientsView: (view: ClientsView) => void;
 
   // UI
   activePanel: Panel;
@@ -219,6 +222,8 @@ export const useStudioStore = create<StudioState>()(
             ? state.activeClientId
             : data.clients[0]?.id ?? "",
         })),
+      clientsView: "logbook",
+      setClientsView: (view) => set({ clientsView: view }),
       activePanel: "dashboard",
       setActivePanel: (panel) => set({ activePanel: panel }),
       sidebarCollapsed: false,
