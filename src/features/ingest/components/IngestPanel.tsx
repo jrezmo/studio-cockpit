@@ -339,6 +339,19 @@ export function IngestPanel() {
             <Label htmlFor="session-prep-folder-web" className="text-xs">
               Source Folder (Browser)
             </Label>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild size="sm" variant="secondary">
+                <label htmlFor="session-prep-folder-web" className="cursor-pointer">
+                  <FolderInput className="mr-2 h-4 w-4" />
+                  Choose Folder
+                </label>
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {webSelectedFiles.length
+                  ? `${webSelectedFiles.length} files from ${webFolderLabel}`
+                  : "No folder selected"}
+              </span>
+            </div>
             <input
               id="session-prep-folder-web"
               type="file"
@@ -347,7 +360,7 @@ export function IngestPanel() {
               webkitdirectory="true"
               multiple
               onChange={handleWebFolderChange}
-              className="w-full text-xs"
+              className="sr-only"
             />
             <p className="text-[10px] text-muted-foreground">
               {webSelectedFiles.length
