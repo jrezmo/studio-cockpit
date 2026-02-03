@@ -25,9 +25,9 @@ export function CorrespondenceLog({
   return (
     <div className="rounded-lg border border-border bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Correspondence</h3>
+        <h3 className="text-sm font-semibold">Messages</h3>
         <Button size="xs" variant="secondary" onClick={onToggleForm}>
-          {showForm ? "Close" : "Add Entry"}
+          {showForm ? "Close" : "Log Message"}
         </Button>
       </div>
       {formContent}

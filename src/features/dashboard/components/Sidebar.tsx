@@ -4,7 +4,6 @@ import { cn } from "@/shared/utils";
 import { useStudioStore } from "@/state/store";
 import type { Panel } from "@/shared/types/projects";
 import {
-  LayoutDashboard,
   FolderInput,
   AudioLines,
   Settings,
@@ -18,9 +17,8 @@ import {
 import { useShallow } from "zustand/react/shallow";
 
 const navItems: { id: Panel; label: string; icon: React.ElementType }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "clients", label: "Clients", icon: Users },
-  { id: "ingest", label: "Ingest Agent", icon: FolderInput },
+  { id: "ingest", label: "Session File Prep", icon: FolderInput },
   { id: "stems", label: "Stem Engine", icon: AudioLines },
   { id: "mixingWorkflow", label: "Mixing Workflow", icon: ListChecks },
   { id: "sessionStats", label: "Session Stats", icon: BookOpen },

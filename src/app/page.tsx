@@ -3,7 +3,6 @@
 import { useStudioStore } from "@/state/store";
 import { Sidebar } from "@/features/dashboard/components/Sidebar";
 import { Header } from "@/features/dashboard/components/Header";
-import { DashboardPanel } from "@/features/dashboard/components/DashboardPanel";
 import { ClientsPanel } from "@/features/clients/components/ClientsPanel";
 import { IngestPanel } from "@/features/ingest/components/IngestPanel";
 import { StemEngine } from "@/features/stems/components/StemEngine";
@@ -11,10 +10,8 @@ import { SettingsPanel } from "@/features/settings/components/SettingsPanel";
 import { ProToolsPanel } from "@/features/protools/components/ProToolsPanel";
 import { SessionStatsPanel } from "@/features/session-stats/components/SessionStatsPanel";
 import { MixingWorkflowPanel } from "@/features/workflows/components/MixingWorkflowPanel";
-import { useIngestWatcher } from "@/features/ingest/hooks/useIngestWatcher";
 
 const panels: Record<string, React.ComponentType> = {
-  dashboard: DashboardPanel,
   clients: ClientsPanel,
   ingest: IngestPanel,
   stems: StemEngine,
@@ -25,9 +22,8 @@ const panels: Record<string, React.ComponentType> = {
 };
 
 export default function Home() {
-  useIngestWatcher();
   const activePanel = useStudioStore((s) => s.activePanel);
-  const ActivePanelComponent = panels[activePanel] || DashboardPanel;
+  const ActivePanelComponent = panels[activePanel] || ClientsPanel;
 
   return (
     <div className="flex h-screen overflow-hidden">

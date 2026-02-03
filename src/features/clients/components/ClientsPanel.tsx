@@ -12,7 +12,17 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/utils";
-import { Timer, Mail, ClipboardList, Pencil, Trash2 } from "lucide-react";
+import {
+  Timer,
+  Mail,
+  ClipboardList,
+  Pencil,
+  Trash2,
+  FolderKanban,
+  PlugZap,
+  ListChecks,
+  ChevronLeft,
+} from "lucide-react";
 import { format, formatDistanceToNow, isThisMonth } from "date-fns";
 import { ClientList } from "@/features/clients/components/ClientList";
 import { ClientForm } from "@/features/clients/components/ClientForm";
@@ -20,6 +30,15 @@ import { ClientProfile } from "@/features/clients/components/ClientProfile";
 import { CorrespondenceLog } from "@/features/clients/components/CorrespondenceLog";
 import { SessionTimer } from "@/features/clients/components/SessionTimer";
 import { TaskBoard } from "@/features/clients/components/TaskBoard";
+import { formatBytes } from "@/shared/format";
+import { ClientDrillCards } from "@/features/clients/components/ClientDrillCards";
+import { ClientOverview } from "@/features/clients/components/ClientOverview";
+import { ClientProjectsView } from "@/features/clients/components/ClientProjectsView";
+import { ClientProjectView } from "@/features/clients/components/ClientProjectView";
+import { ClientProtoolsView } from "@/features/clients/components/ClientProtoolsView";
+import { ClientSessionsView } from "@/features/clients/components/ClientSessionsView";
+import { ClientWorkflowView } from "@/features/clients/components/ClientWorkflowView";
+import { useClientDrill } from "@/features/clients/hooks/useClientDrill";
 
 const sessionTypeOptions: SessionType[] = [
   "mixing",
@@ -29,17 +48,21 @@ const sessionTypeOptions: SessionType[] = [
   "mastering",
 ];
 
-const clientViewOptions = [
-  { id: "logbook", label: "Logbook" },
-  { id: "board", label: "Session Board" },
-  { id: "console", label: "Artist Console" },
-] as const;
-
 const taskStatusStyles: Record<string, string> = {
   todo: "bg-secondary text-secondary-foreground",
   "in-progress": "bg-blue-500/15 text-blue-400",
   blocked: "bg-red-500/15 text-red-400",
   done: "bg-green-500/15 text-green-400",
+};
+
+const projectStatusStyles: Record<
+  "active" | "mixing" | "review" | "delivered",
+  string
+> = {
+  active: "bg-blue-500/15 text-blue-400",
+  mixing: "bg-purple-500/15 text-purple-400",
+  review: "bg-amber-500/15 text-amber-400",
+  delivered: "bg-green-500/15 text-green-400",
 };
 
 const clientStatusStyles: Record<string, string> = {
@@ -56,6 +79,7 @@ type LogItem = {
   occurredAt: string;
   meta?: string;
 };
+
 
 function formatDuration(minutes: number) {
   if (!minutes || Number.isNaN(minutes)) return "0m";
@@ -86,8 +110,6 @@ export function ClientsPanel() {
     activeClientId,
     setActiveClientId,
     setCrmData,
-    clientsView,
-    setClientsView,
     projects,
   } = useStudioStore(
     useShallow((s) => ({
@@ -99,8 +121,6 @@ export function ClientsPanel() {
       activeClientId: s.activeClientId,
       setActiveClientId: s.setActiveClientId,
       setCrmData: s.setCrmData,
-      clientsView: s.clientsView,
-      setClientsView: s.setClientsView,
       projects: s.projects,
     }))
   );
@@ -140,6 +160,8 @@ export function ClientsPanel() {
   });
   const [showClientForm, setShowClientForm] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [showClientList, setShowClientList] = useState(true);
+  const [hasSelectedClient, setHasSelectedClient] = useState(false);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [editingProject, setEditingProject] = useState<ClientProject | null>(null);
   const [projectForm, setProjectForm] = useState({
@@ -155,9 +177,15 @@ export function ClientsPanel() {
     rate: "85",
     status: "active" as "active" | "at-risk" | "inactive",
   });
-  const [consoleTab, setConsoleTab] = useState<
-    "overview" | "sessions" | "tasks" | "comms"
-  >("overview");
+  const {
+    clientView,
+    setClientView,
+    focusedProjectId,
+    setFocusedProjectId,
+    goOverview,
+    goProjects,
+    openProject,
+  } = useClientDrill(activeClientId);
 
   const { error: loadingError, loading } = useFetch<CrmData>("/api/crm", {
     retries: 2,
@@ -214,6 +242,40 @@ export function ClientsPanel() {
     [clientProjects, activeClient]
   );
 
+  const activeProject = useMemo(
+    () =>
+      focusedProjectId
+        ? activeClientProjects.find((project) => project.id === focusedProjectId) ??
+          null
+        : null,
+    [activeClientProjects, focusedProjectId]
+  );
+
+  const activeClientProTools = useMemo(
+    () =>
+      activeClientProjects
+        .map((project) => ({
+          clientProject: project,
+          protools: projects.find((item) => item.id === project.protoolsProjectId),
+        }))
+        .filter(
+          (entry): entry is {
+            clientProject: ClientProject;
+            protools: NonNullable<(typeof projects)[number]>;
+          } => !!entry.protools
+        ),
+    [activeClientProjects, projects]
+  );
+
+  const activeProjectProTools = useMemo(
+    () =>
+      activeProject
+        ? projects.find((item) => item.id === activeProject.protoolsProjectId) ??
+          null
+        : null,
+    [activeProject, projects]
+  );
+
   const activeClientSessions = useMemo(
     () =>
       activeClient
@@ -236,6 +298,24 @@ export function ClientsPanel() {
         ? clientCorrespondence.filter((item) => item.clientId === activeClient.id)
         : [],
     [clientCorrespondence, activeClient]
+  );
+
+  const activeProjectSessions = useMemo(
+    () =>
+      activeProject
+        ? activeClientSessions.filter(
+            (session) => session.projectId === activeProject.id
+          )
+        : [],
+    [activeProject, activeClientSessions]
+  );
+
+  const activeProjectTasks = useMemo(
+    () =>
+      activeProject
+        ? activeClientTasks.filter((task) => task.projectId === activeProject.id)
+        : [],
+    [activeProject, activeClientTasks]
   );
 
   const loggedMinutesThisMonth = useMemo(() => {
@@ -659,6 +739,7 @@ export function ClientsPanel() {
       dueDate: project.dueDate?.slice(0, 10) ?? "",
     });
     setShowProjectForm(true);
+    goProjects();
   };
 
   const handleUpdateProject = async () => {
@@ -687,6 +768,14 @@ export function ClientsPanel() {
   const handleDeleteProject = async (projectId: string) => {
     setLogError("");
     await postCrmAction("deleteProject", { id: projectId });
+    if (focusedProjectId === projectId) {
+      setFocusedProjectId(null);
+      goProjects();
+    }
+  };
+
+  const handleOpenProject = (projectId: string) => {
+    openProject(projectId);
   };
 
   if (!activeClient) {
@@ -697,13 +786,19 @@ export function ClientsPanel() {
     );
   }
 
+  const handleSelectClient = (clientId: string) => {
+    setActiveClientId(clientId);
+    setHasSelectedClient(true);
+    setShowClientList(false);
+  };
+
   const leftRail = (
     <ClientList
       filteredClients={filteredClients}
       clients={clients}
       clientProjects={clientProjects}
       activeClientId={activeClient.id}
-      onSelectClient={setActiveClientId}
+      onSelectClient={handleSelectClient}
       search={search}
       onSearchChange={setSearch}
       loading={loading}
@@ -711,7 +806,7 @@ export function ClientsPanel() {
   );
 
   const kpiRow = (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div className="rounded-lg border border-border bg-card p-4">
         <p className="text-xs text-muted-foreground">Active Projects</p>
         <p className="mt-2 text-lg font-semibold">
@@ -727,10 +822,6 @@ export function ClientsPanel() {
       <div className="rounded-lg border border-border bg-card p-4">
         <p className="text-xs text-muted-foreground">Open Tasks</p>
         <p className="mt-2 text-lg font-semibold">{openTasksCount}</p>
-      </div>
-      <div className="rounded-lg border border-border bg-card p-4">
-        <p className="text-xs text-muted-foreground">Last Touch</p>
-        <p className="mt-2 text-lg font-semibold">{lastContactLabel}</p>
       </div>
     </div>
   );
@@ -797,7 +888,6 @@ export function ClientsPanel() {
       client={activeClient}
       activeClientProjects={activeClientProjects}
       projects={projects}
-      clientsView={clientsView}
       statusClassName={clientStatusStyles[activeClient.status]}
       formatDuration={formatDuration}
       onEdit={handleEditClient}
@@ -973,6 +1063,11 @@ export function ClientsPanel() {
     </div>
   ) : null;
 
+  const loggedSessionsList =
+    clientView === "sessions"
+      ? activeClientSessions
+      : activeClientSessions.slice(0, 6);
+
   const timerCard = (
     <SessionTimer
       timerRunning={timerRunning}
@@ -1009,6 +1104,71 @@ export function ClientsPanel() {
     />
   );
 
+  const sessionEditForm = editingSession ? (
+    <div className="rounded-md border border-border bg-secondary/20 p-3 space-y-2">
+      <p className="text-xs font-semibold">Edit Session</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-[10px]">Start</Label>
+          <Input
+            type="datetime-local"
+            value={manualStart}
+            onChange={(e) => setManualStart(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px]">End</Label>
+          <Input
+            type="datetime-local"
+            value={manualEnd}
+            onChange={(e) => setManualEnd(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-[10px]">Type</Label>
+          <select
+            value={manualType}
+            onChange={(e) => setManualType(e.target.value as SessionType)}
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {sessionTypeOptions.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px]">Project</Label>
+          <select
+            value={manualProjectId}
+            onChange={(e) => setManualProjectId(e.target.value)}
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">General</option>
+            {activeClientProjects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px]">Notes</Label>
+        <Input
+          value={manualNotes}
+          onChange={(e) => setManualNotes(e.target.value)}
+          placeholder="Session notes..."
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button size="xs" onClick={handleUpdateSession}>Update</Button>
+        <Button size="xs" variant="ghost" onClick={handleCancelEditSession}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   const loggedSessionsCard = (
     <div className="rounded-lg border border-border bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -1017,70 +1177,9 @@ export function ClientsPanel() {
           {activeClientSessions.length} total
         </Badge>
       </div>
-      {editingSession && (
-        <div className="rounded-md border border-border bg-secondary/20 p-3 space-y-2">
-          <p className="text-xs font-semibold">Edit Session</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px]">Start</Label>
-              <Input
-                type="datetime-local"
-                value={manualStart}
-                onChange={(e) => setManualStart(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">End</Label>
-              <Input
-                type="datetime-local"
-                value={manualEnd}
-                onChange={(e) => setManualEnd(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px]">Type</Label>
-              <select
-                value={manualType}
-                onChange={(e) => setManualType(e.target.value as SessionType)}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {sessionTypeOptions.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">Project</Label>
-              <select
-                value={manualProjectId}
-                onChange={(e) => setManualProjectId(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">General</option>
-                {activeClientProjects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-[10px]">Notes</Label>
-            <Input
-              value={manualNotes}
-              onChange={(e) => setManualNotes(e.target.value)}
-              placeholder="Session notes..."
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button size="xs" onClick={handleUpdateSession}>Update</Button>
-            <Button size="xs" variant="ghost" onClick={handleCancelEditSession}>Cancel</Button>
-          </div>
-        </div>
-      )}
+      {sessionEditForm}
       <div className="space-y-2">
-        {activeClientSessions.slice(0, 6).map((session) => {
+        {loggedSessionsList.map((session) => {
           const project = clientProjects.find(
             (item) => item.id === session.projectId
           );
@@ -1131,45 +1230,6 @@ export function ClientsPanel() {
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-
-  const tasksCard = (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Tasks</h3>
-        <Button
-          size="xs"
-          variant="secondary"
-          onClick={() => setShowTaskForm((prev) => !prev)}
-        >
-          {showTaskForm ? "Close" : "Add Task"}
-        </Button>
-      </div>
-      {taskFormContent}
-      <div className="space-y-2">
-        {activeClientTasks.map((task) => (
-          <div
-            key={task.id}
-            className="rounded-md bg-secondary/30 px-3 py-2 text-xs"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="font-semibold">{task.title}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {task.assignee ?? "Unassigned"}
-                  {task.dueAt ? ` · due ${task.dueAt}` : ""}
-                </p>
-              </div>
-              <Badge
-                className={cn("text-[10px]", taskStatusStyles[task.status])}
-              >
-                {task.status.replace("-", " ")}
-              </Badge>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1315,109 +1375,435 @@ export function ClientsPanel() {
     />
   );
 
-  const consoleTabs = (
-    <div className="flex flex-wrap gap-2">
-      {[
-        { id: "overview", label: "Overview" },
-        { id: "sessions", label: "Sessions" },
-        { id: "tasks", label: "Tasks" },
-        { id: "comms", label: "Comms" },
-      ].map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() =>
-            setConsoleTab(tab.id as "overview" | "sessions" | "tasks" | "comms")
-          }
+  const backToOverview = (
+    <Button size="xs" variant="ghost" onClick={goOverview}>
+      <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+      Back to Overview
+    </Button>
+  );
+
+  const backToProjects = (
+    <Button size="xs" variant="ghost" onClick={goProjects}>
+      <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+      Back to Projects
+    </Button>
+  );
+
+  const drillCards = [
+    {
+      id: "projects",
+      title: "Projects",
+      description: "Albums, singles, delivery sets",
+      meta: `${activeClientProjects.length} active`,
+      icon: FolderKanban,
+    },
+    {
+      id: "protools",
+      title: "Pro Tools Sessions",
+      description: "Session files and settings",
+      meta: `${activeClientProTools.length} linked`,
+      icon: PlugZap,
+    },
+    {
+      id: "sessions",
+      title: "Working Sessions",
+      description: "Logs, timers, and notes",
+      meta: `${activeClientSessions.length} logged`,
+      icon: Timer,
+    },
+    {
+      id: "workflow",
+      title: "Workflow",
+      description: "Tasks and client messages",
+      meta: `${openTasksCount} open tasks`,
+      icon: ListChecks,
+    },
+  ] as const;
+
+  const overviewDrillCards = (
+    <ClientDrillCards
+      cards={drillCards}
+      onSelect={(id) => setClientView(id as typeof clientView)}
+    />
+  );
+
+  const projectListCard = (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Projects</h3>
+        <Badge variant="secondary" className="text-[10px]">
+          {activeClientProjects.length}
+        </Badge>
+      </div>
+      {activeClientProjects.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          No projects yet. Add one to start tracking sessions.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {activeClientProjects.map((project) => (
+            <div
+              key={project.id}
+              className="rounded-md border border-border bg-secondary/30 px-3 py-2 text-xs"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="font-semibold">{project.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {project.dueDate ? `Due ${project.dueDate}` : "No due date"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    className={cn(
+                      "text-[10px]",
+                      projectStatusStyles[project.status]
+                    )}
+                  >
+                    {project.status}
+                  </Badge>
+                  <Button
+                    size="xs"
+                    variant="secondary"
+                    onClick={() => handleOpenProject(project.id)}
+                  >
+                    Open
+                  </Button>
+                  <div className="flex gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleEditProject(project)}
+                      className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      title="Edit project"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteProject(project.id)}
+                      className="rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                      title="Delete project"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                <span>{formatDuration(project.totalLoggedMinutes)} logged</span>
+                <span>•</span>
+                <span>
+                  {project.lastSessionAt
+                    ? `Last session ${format(
+                        new Date(project.lastSessionAt),
+                        "MMM d"
+                      )}`
+                    : "No sessions yet"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const projectDetailCard = activeProject ? (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold">{activeProject.name}</h3>
+          <p className="text-xs text-muted-foreground">
+            {activeProject.dueDate
+              ? `Due ${activeProject.dueDate}`
+              : "No due date set"}
+          </p>
+        </div>
+        <Badge
           className={cn(
-            "rounded-full border border-transparent px-3 py-1 text-xs transition-colors",
-            consoleTab === tab.id
-              ? "bg-secondary text-secondary-foreground"
-              : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+            "text-[10px]",
+            projectStatusStyles[activeProject.status]
           )}
         >
-          {tab.label}
-        </button>
-      ))}
+          {activeProject.status}
+        </Badge>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs">
+        <div className="rounded-md bg-secondary/30 p-3">
+          <p className="text-[10px] text-muted-foreground">Logged Time</p>
+          <p className="mt-2 font-semibold">
+            {formatDuration(activeProject.totalLoggedMinutes)}
+          </p>
+        </div>
+        <div className="rounded-md bg-secondary/30 p-3">
+          <p className="text-[10px] text-muted-foreground">Last Session</p>
+          <p className="mt-2 font-semibold">
+            {activeProject.lastSessionAt
+              ? format(new Date(activeProject.lastSessionAt), "MMM d, h:mma")
+              : "No sessions yet"}
+          </p>
+        </div>
+        <div className="rounded-md bg-secondary/30 p-3">
+          <p className="text-[10px] text-muted-foreground">Client</p>
+          <p className="mt-2 font-semibold">{activeClient.name}</p>
+        </div>
+      </div>
+      <div className="rounded-md border border-border bg-secondary/30 p-3 text-xs">
+        <p className="text-[10px] text-muted-foreground">Pro Tools</p>
+        <p className="mt-2 font-semibold">
+          {activeProjectProTools
+            ? activeProjectProTools.projectName
+            : "No Pro Tools session linked"}
+        </p>
+        {activeProjectProTools && (
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            {activeProjectProTools.sampleRate / 1000}kHz ·{" "}
+            {activeProjectProTools.bpm} BPM ·{" "}
+            {formatBytes(activeProjectProTools.sizeBytes)}
+          </p>
+        )}
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-lg border border-border bg-card p-5 text-sm">
+      Select a project to view details.
     </div>
   );
 
-  const consoleContent =
-    consoleTab === "sessions" ? (
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {timerCard}
-        {loggedSessionsCard}
+  const projectSessionsCard = (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Working Sessions</h3>
+        <Badge variant="secondary" className="text-[10px]">
+          {activeProjectSessions.length} total
+        </Badge>
       </div>
-    ) : consoleTab === "tasks" ? (
-      tasksCard
-    ) : consoleTab === "comms" ? (
-      correspondenceCard
-    ) : (
-      <>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {timerCard}
-          {loggedSessionsCard}
-        </div>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {tasksCard}
-          {correspondenceCard}
-        </div>
-      </>
-    );
-
-  const logbookView = (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
-      {leftRail}
-      <div className="space-y-4">
-        {kpiRow}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-4">
-            {clientProfileCard}
-            {projectEditForm}
-            {logbookTimelineCard}
-            {loggedSessionsCard}
+      {sessionEditForm}
+      <div className="space-y-2">
+        {activeProjectSessions.map((session) => (
+          <div
+            key={session.id}
+            className="group rounded-md bg-secondary/30 px-3 py-2 text-xs"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="font-semibold">{session.type}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {format(new Date(session.startTime), "MMM d, h:mma")} ·{" "}
+                  {formatDuration(session.durationMinutes)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => handleEditSession(session)}
+                    className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    title="Edit session"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSession(session.id)}
+                    className="rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                    title="Delete session"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+                <Badge variant="secondary" className="text-[10px]">
+                  ${session.billableRate ?? activeClient.ratePerHour}/hr
+                </Badge>
+              </div>
+            </div>
+            {session.notes && (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {session.notes}
+              </p>
+            )}
           </div>
-          <div className="space-y-4">
-            {timerCard}
-            {tasksCard}
-            {correspondenceCard}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const boardView = (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
-      {leftRail}
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4">
-            {clientProfileCard}
-            {projectEditForm}
-            {sessionPlannerCard}
-          </div>
-          <div className="space-y-4">
-            {timerCard}
-            {correspondenceCard}
-          </div>
-        </div>
-        {taskBoard}
+        ))}
+        {activeProjectSessions.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            No working sessions logged for this project yet.
+          </p>
+        )}
       </div>
     </div>
   );
 
-  const consoleView = (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
-      {leftRail}
-      <div className="space-y-4">
-        {kpiRow}
-        {clientProfileCard}
-        {projectEditForm}
-        {consoleTabs}
-        {consoleContent}
+  const projectTasksCard = (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Project Tasks</h3>
+        <Badge variant="secondary" className="text-[10px]">
+          {activeProjectTasks.length} total
+        </Badge>
+      </div>
+      <div className="space-y-2">
+        {activeProjectTasks.map((task) => (
+          <div
+            key={task.id}
+            className="group rounded-md bg-secondary/30 px-3 py-2 text-xs"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="font-semibold">{task.title}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {task.assignee ?? "Unassigned"}
+                  {task.dueAt ? ` · due ${task.dueAt}` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  className={cn("text-[10px]", taskStatusStyles[task.status])}
+                >
+                  {task.status.replace("-", " ")}
+                </Badge>
+                <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => handleEditTask(task)}
+                    className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    title="Edit task"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                    title="Delete task"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        {activeProjectTasks.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            No project tasks tracked yet.
+          </p>
+        )}
       </div>
     </div>
   );
+
+  const protoolsSessionsCard = (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Pro Tools Sessions</h3>
+        <Badge variant="secondary" className="text-[10px]">
+          {activeClientProTools.length} linked
+        </Badge>
+      </div>
+      {activeClientProTools.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Link a project to a Pro Tools session to see the details here.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {activeClientProTools.map((entry) => (
+            <div
+              key={entry.clientProject.id}
+              className="rounded-md border border-border bg-secondary/30 px-3 py-2 text-xs"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="font-semibold">{entry.clientProject.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {entry.protools.projectName}
+                  </p>
+                </div>
+                <Badge variant="secondary" className="text-[10px]">
+                  {entry.protools.sampleRate / 1000}kHz
+                </Badge>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                <span>{entry.protools.bpm} BPM</span>
+                <span>•</span>
+                <span>{formatBytes(entry.protools.sizeBytes)}</span>
+                <span>•</span>
+                <span>
+                  Updated{" "}
+                  {format(new Date(entry.protools.updatedAt), "MMM d, h:mma")}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const overviewView = (
+    <ClientOverview
+      profileCard={clientProfileCard}
+      kpiRow={kpiRow}
+      lastTouchLabel={lastContactLabel}
+      drillCards={overviewDrillCards}
+      sessionPlannerCard={sessionPlannerCard}
+      logbookTimelineCard={logbookTimelineCard}
+    />
+  );
+
+  const projectsView = (
+    <ClientProjectsView
+      backButton={backToOverview}
+      projectEditForm={projectEditForm}
+      projectListCard={projectListCard}
+    />
+  );
+
+  const projectView = (
+    <ClientProjectView
+      backButton={backToProjects}
+      projectEditForm={projectEditForm}
+      projectDetailCard={projectDetailCard}
+      projectSessionsCard={projectSessionsCard}
+      projectTasksCard={projectTasksCard}
+    />
+  );
+
+  const protoolsView = (
+    <ClientProtoolsView
+      backButton={backToOverview}
+      protoolsSessionsCard={protoolsSessionsCard}
+    />
+  );
+
+  const sessionsView = (
+    <ClientSessionsView
+      backButton={backToOverview}
+      sessionPlannerCard={sessionPlannerCard}
+      timerCard={timerCard}
+      loggedSessionsCard={loggedSessionsCard}
+    />
+  );
+
+  const workflowView = (
+    <ClientWorkflowView
+      backButton={backToOverview}
+      taskBoard={taskBoard}
+      correspondenceCard={correspondenceCard}
+    />
+  );
+
+  const contentView =
+    clientView === "projects"
+      ? projectsView
+      : clientView === "project"
+      ? projectView
+      : clientView === "protools"
+      ? protoolsView
+      : clientView === "sessions"
+      ? sessionsView
+      : clientView === "workflow"
+      ? workflowView
+      : overviewView;
 
   return (
     <div className="space-y-6">
@@ -1425,42 +1811,27 @@ export function ClientsPanel() {
         <div>
           <h2 className="text-sm font-semibold">Clients</h2>
           <p className="text-xs text-muted-foreground">
-            CRM, project tracking, and session logging
+            Artist management, project tracking, and session logging
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/40 p-1 text-[10px]">
-            {clientViewOptions.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => setClientsView(option.id)}
-                className={cn(
-                  "rounded-full px-3 py-1 transition-colors",
-                  clientsView === option.id
-                    ? "bg-primary/20 text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setShowClientForm((prev) => !prev)}
-            >
-              {showClientForm ? "Close" : "Add Client"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowCorrespondenceForm(true)}
-            >
-              Log Message
-            </Button>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setShowClientForm((prev) => !prev)}
+          >
+            {showClientForm ? "Close" : "Add Client"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setClientView("workflow");
+              setShowCorrespondenceForm(true);
+            }}
+          >
+            Log Message
+          </Button>
         </div>
       </div>
 
@@ -1487,11 +1858,47 @@ export function ClientsPanel() {
           {logError}
         </div>
       )}
-      {clientsView === "logbook"
-        ? logbookView
-        : clientsView === "board"
-        ? boardView
-        : consoleView}
+      <div className="space-y-4">
+        {showClientList && leftRail}
+        {hasSelectedClient ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Client
+                </p>
+                <select
+                  value={activeClient.id}
+                  onChange={(event) => {
+                    setActiveClientId(event.target.value);
+                    setHasSelectedClient(true);
+                    setShowClientList(false);
+                  }}
+                  className="h-8 min-w-[200px] rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => setShowClientList(true)}
+              >
+                Back to List
+              </Button>
+            </div>
+            <div className="space-y-4">{contentView}</div>
+          </>
+        ) : (
+          <div className="rounded-lg border border-border bg-card p-4 text-xs text-muted-foreground">
+            Select a client to view their projects, Pro Tools sessions, and workflow.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

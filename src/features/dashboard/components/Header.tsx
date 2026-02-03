@@ -3,9 +3,8 @@
 import { useStudioStore } from "@/state/store";
 
 const panelTitles: Record<string, string> = {
-  dashboard: "Dashboard",
   clients: "Clients",
-  ingest: "Ingest Agent",
+  ingest: "Session File Prep",
   stems: "Stem Engine",
   mixingWorkflow: "Mixing Workflow",
   sessionStats: "Session Stats",
@@ -19,7 +18,7 @@ export function Header() {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
       <h1 className="text-lg font-semibold tracking-tight">
-        {panelTitles[activePanel]}
+        {panelTitles[activePanel] ?? "Clients"}
       </h1>
       <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
         <span className="flex items-center gap-1.5">

@@ -4,13 +4,12 @@ import { Badge } from "@/shared/ui/badge";
 import { Separator } from "@/shared/ui/separator";
 import { cn } from "@/shared/utils";
 import type { Client, ClientProject } from "@/features/clients/types";
-import type { ClientsView, Project } from "@/shared/types/projects";
+import type { Project } from "@/shared/types/projects";
 
 type ClientProfileProps = {
   client: Client;
   activeClientProjects: ClientProject[];
   projects: Project[];
-  clientsView: ClientsView;
   statusClassName: string;
   formatDuration: (minutes: number) => string;
   onEdit?: (client: Client) => void;
@@ -23,7 +22,6 @@ export function ClientProfile({
   client,
   activeClientProjects,
   projects,
-  clientsView,
   statusClassName,
   formatDuration,
   onEdit,
@@ -33,22 +31,11 @@ export function ClientProfile({
 }: ClientProfileProps) {
   return (
     <div
-      className={cn(
-        "rounded-lg border border-border bg-card p-5 space-y-4",
-        clientsView === "console" &&
-          "bg-gradient-to-br from-slate-950/90 via-slate-900/70 to-slate-900/30 border-primary/20"
-      )}
+      className={cn("rounded-lg border border-border bg-card p-5 space-y-4")}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3
-            className={cn(
-              "text-sm font-semibold",
-              clientsView === "console" && "text-lg"
-            )}
-          >
-            {client.name}
-          </h3>
+          <h3 className="text-sm font-semibold">{client.name}</h3>
           <p className="text-xs text-muted-foreground">
             {client.primaryContact} · {client.email}
           </p>

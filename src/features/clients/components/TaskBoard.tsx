@@ -23,7 +23,7 @@ export function TaskBoard({
   return (
     <div className="rounded-lg border border-border bg-card p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">Session Board</h3>
+        <h3 className="text-sm font-semibold">Workflow Board</h3>
         <Button size="xs" variant="secondary" onClick={onToggleForm}>
           {showTaskForm ? "Close" : "Add Task"}
         </Button>

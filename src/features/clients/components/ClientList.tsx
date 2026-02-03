@@ -1,5 +1,5 @@
-import { format, formatDistanceToNow } from "date-fns";
-import { CalendarClock, Users } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { Users } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/shared/utils";
@@ -85,25 +85,6 @@ export function ClientList({
               </button>
             );
           })}
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <CalendarClock className="h-4 w-4" />
-          Upcoming Sessions
-        </div>
-        <div className="space-y-2 text-xs">
-          {clients
-            .filter((client) => client.nextSessionAt)
-            .map((client) => (
-              <div key={client.id} className="flex items-center justify-between">
-                <span className="font-medium">{client.name}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {format(new Date(client.nextSessionAt ?? ""), "MMM d, h:mma")}
-                </span>
-              </div>
-            ))}
         </div>
       </div>
     </div>

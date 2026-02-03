@@ -2,7 +2,6 @@ export type ProjectStatus = "active" | "mixing" | "review" | "delivered";
 export type IngestStatus = "success" | "pending" | "error";
 export type WorkflowStepStatus = "todo" | "inProgress" | "done";
 export type Panel =
-  | "dashboard"
   | "clients"
   | "ingest"
   | "stems"
@@ -10,7 +9,6 @@ export type Panel =
   | "protools"
   | "sessionStats"
   | "mixingWorkflow";
-export type ClientsView = "logbook" | "board" | "console";
 
 export interface Project {
   id: string;

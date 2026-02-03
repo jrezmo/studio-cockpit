@@ -10,7 +10,7 @@ export type UiSlice = {
 };
 
 export const createUiSlice: StateCreator<StudioState, [], [], UiSlice> = (set) => ({
-  activePanel: "dashboard",
+  activePanel: "clients",
   setActivePanel: (panel) => set({ activePanel: panel }),
   sidebarCollapsed: false,
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
