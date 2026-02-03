@@ -4,6 +4,7 @@ import { useStudioStore } from "@/lib/store";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
+import { ClientsPanel } from "@/components/clients/ClientsPanel";
 import { IngestPanel } from "@/components/ingest/IngestPanel";
 import { StemEngine } from "@/components/stems/StemEngine";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
@@ -11,6 +12,7 @@ import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
 
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,
+  clients: ClientsPanel,
   ingest: IngestPanel,
   stems: StemEngine,
   settings: SettingsPanel,

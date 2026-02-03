@@ -1,10 +1,20 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { seedCrmData } from "@/lib/crm/seed";
+import type {
+  Client,
+  ClientCorrespondence,
+  ClientProject,
+  ClientSession,
+  ClientTask,
+  CrmData,
+} from "@/lib/crm/types";
 
 export type ProjectStatus = "active" | "mixing" | "review" | "delivered";
 export type IngestStatus = "success" | "pending" | "error";
 export type Panel =
   | "dashboard"
+  | "clients"
   | "ingest"
   | "stems"
   | "settings"
@@ -53,6 +63,16 @@ interface StudioState {
   // Settings
   settings: Settings;
   updateSettings: (settings: Partial<Settings>) => void;
+
+  // Clients / CRM
+  clients: Client[];
+  clientProjects: ClientProject[];
+  clientSessions: ClientSession[];
+  clientTasks: ClientTask[];
+  clientCorrespondence: ClientCorrespondence[];
+  activeClientId: string;
+  setActiveClientId: (clientId: string) => void;
+  setCrmData: (data: CrmData) => void;
 
   // UI
   activePanel: Panel;
@@ -165,6 +185,7 @@ const mockIngestHistory: IngestRecord[] = [
   },
 ];
 
+
 export const useStudioStore = create<StudioState>()(
   persist(
     (set) => ({
@@ -180,6 +201,24 @@ export const useStudioStore = create<StudioState>()(
       },
       updateSettings: (partial) =>
         set((state) => ({ settings: { ...state.settings, ...partial } })),
+      clients: seedCrmData.clients,
+      clientProjects: seedCrmData.clientProjects,
+      clientSessions: seedCrmData.clientSessions,
+      clientTasks: seedCrmData.clientTasks,
+      clientCorrespondence: seedCrmData.clientCorrespondence,
+      activeClientId: seedCrmData.clients[0]?.id ?? "",
+      setActiveClientId: (clientId) => set({ activeClientId: clientId }),
+      setCrmData: (data) =>
+        set((state) => ({
+          clients: data.clients,
+          clientProjects: data.clientProjects,
+          clientSessions: data.clientSessions,
+          clientTasks: data.clientTasks,
+          clientCorrespondence: data.clientCorrespondence,
+          activeClientId: data.clients.some((client) => client.id === state.activeClientId)
+            ? state.activeClientId
+            : data.clients[0]?.id ?? "",
+        })),
       activePanel: "dashboard",
       setActivePanel: (panel) => set({ activePanel: panel }),
       sidebarCollapsed: false,

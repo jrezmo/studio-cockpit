@@ -4,6 +4,7 @@ import { useStudioStore } from "@/lib/store";
 
 const panelTitles: Record<string, string> = {
   dashboard: "Dashboard",
+  clients: "Clients",
   ingest: "Ingest Agent",
   stems: "Stem Engine",
   settings: "Settings",
