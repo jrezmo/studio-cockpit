@@ -16,7 +16,7 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 ## Core Panels
 - Dashboard: Status widgets and project grid for a quick daily overview.
 - Ingest: Watcher control, detection rules, and ingest history.
-- Mixing Workflow: Joel's mix prep checklist tied to each project.
+- Mixing Workflow: Per-project prep checklist with notes and auto-advance from ingest and Pro Tools events.
 - Sessions: Guided launch flow with stepper for creating or opening sessions.
 - Stems: Standardized stem filename preview and part selection.
 - Session Stats: Search sessions and analyze track and plugin usage.
@@ -25,7 +25,7 @@ Studio Cockpit is a desktop-style control surface for professional audio workflo
 
 ## Typical Workflow
 1. Receive files and run Smart Ingest to organize them.
-2. Track mix prep in the Mixing Workflow panel.
+2. Track mix prep in the Mixing Workflow panel, adding notes where needed.
 3. Launch a new session from the Sessions panel.
 4. Work in Pro Tools with live context in the MCP panel.
 5. Print stems and export with standardized names.

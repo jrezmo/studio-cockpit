@@ -67,6 +67,18 @@ export interface WorkflowStep {
   status: WorkflowStepStatus;
   updatedAt?: string;
   completedAt?: string;
+  notes?: string;
+}
+
+export interface ProToolsSessionEvent {
+  name: string;
+  location: string;
+  sampleRate?: string;
+  bitDepth?: string;
+  fileType?: string;
+  ioSettings?: string;
+  interleaved?: boolean;
+  createdAt: string;
 }
 
 interface StudioState {
@@ -108,7 +120,16 @@ interface StudioState {
     stepId: string,
     status: WorkflowStepStatus
   ) => void;
+  setMixingWorkflowStepNotes: (
+    projectId: string,
+    stepId: string,
+    notes: string
+  ) => void;
   resetMixingWorkflow: (projectId: string) => void;
+
+  // Pro Tools Events
+  lastProToolsSessionCreated: ProToolsSessionEvent | null;
+  setLastProToolsSessionCreated: (event: ProToolsSessionEvent) => void;
 
   // UI
   activePanel: Panel;
@@ -343,6 +364,19 @@ export const useStudioStore = create<StudioState>()(
             },
           };
         }),
+      setMixingWorkflowStepNotes: (projectId, stepId, notes) =>
+        set((state) => {
+          const steps =
+            state.mixingWorkflowByProject[projectId] ?? createMixingWorkflowSteps();
+          return {
+            mixingWorkflowByProject: {
+              ...state.mixingWorkflowByProject,
+              [projectId]: steps.map((step) =>
+                step.id === stepId ? { ...step, notes } : step
+              ),
+            },
+          };
+        }),
       resetMixingWorkflow: (projectId) =>
         set((state) => ({
           mixingWorkflowByProject: {
@@ -350,6 +384,9 @@ export const useStudioStore = create<StudioState>()(
             [projectId]: createMixingWorkflowSteps(),
           },
         })),
+      lastProToolsSessionCreated: null,
+      setLastProToolsSessionCreated: (event) =>
+        set({ lastProToolsSessionCreated: event }),
       activePanel: "dashboard",
       setActivePanel: (panel) => set({ activePanel: panel }),
       sidebarCollapsed: false,

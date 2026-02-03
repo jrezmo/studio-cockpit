@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useStudioStore } from "@/lib/store";
 
 type ToolResponse = {
   ok: boolean;
@@ -37,6 +38,9 @@ async function createProject(payload: Record<string, unknown>) {
 }
 
 export function ProToolsPanel() {
+  const setLastProToolsSessionCreated = useStudioStore(
+    (s) => s.setLastProToolsSessionCreated
+  );
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "ok">(
     "idle"
   );
@@ -433,6 +437,18 @@ export function ProToolsPanel() {
                 });
                 setProjectResult(extractText(result));
                 setStateFromResult(result);
+                if (result.ok) {
+                  setLastProToolsSessionCreated({
+                    name: projectName,
+                    location: projectLocation,
+                    fileType: projectFileType,
+                    sampleRate: projectSampleRate,
+                    bitDepth: projectBitDepth,
+                    ioSettings: projectIoSettings,
+                    interleaved: projectInterleaved,
+                    createdAt: new Date().toISOString(),
+                  });
+                }
               }}
             >
               Create Project ({parsedTrackNames.length} tracks)

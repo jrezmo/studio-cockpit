@@ -48,7 +48,10 @@ export function MixingWorkflowPanel() {
     activeProjectId,
     setActiveProjectId,
     workflows,
+    ingestHistory,
+    lastProToolsSessionCreated,
     setStatus,
+    setNotes,
     reset,
   } = useStudioStore(
     useShallow((s) => ({
@@ -56,7 +59,10 @@ export function MixingWorkflowPanel() {
       activeProjectId: s.activeMixingWorkflowProjectId,
       setActiveProjectId: s.setActiveMixingWorkflowProjectId,
       workflows: s.mixingWorkflowByProject,
+      ingestHistory: s.ingestHistory,
+      lastProToolsSessionCreated: s.lastProToolsSessionCreated,
       setStatus: s.setMixingWorkflowStepStatus,
+      setNotes: s.setMixingWorkflowStepNotes,
       reset: s.resetMixingWorkflow,
     }))
   );
@@ -75,11 +81,49 @@ export function MixingWorkflowPanel() {
   const steps = projectId ? workflows[projectId] ?? [] : [];
 
   useEffect(() => {
+    if (!projectId || !activeProject) return;
+    if (!steps.length) return;
+
+    const hasProjectIngest = ingestHistory.some(
+      (record) =>
+        record.status === "success" &&
+        record.destPath &&
+        record.destPath.startsWith(activeProject.folderPath)
+    );
+    if (hasProjectIngest) {
+      setStatus(projectId, "mix-step-1", "done");
+      setStatus(projectId, "mix-step-2", "done");
+    }
+
+    const hasAudioIngest = ingestHistory.some(
+      (record) =>
+        record.status === "success" &&
+        record.destPath &&
+        record.destPath.startsWith(activeProject.folderPath) &&
+        ["wav", "aif", "aiff"].includes(record.fileType)
+    );
+    const step4Done = steps.find((step) => step.id === "mix-step-4")?.status === "done";
+    if (hasAudioIngest && step4Done) {
+      setStatus(projectId, "mix-step-5", "done");
+    }
+  }, [projectId, activeProject, steps, ingestHistory, setStatus]);
+
+  useEffect(() => {
     if (!projectId) return;
     if (!workflows[projectId]) {
       reset(projectId);
     }
   }, [projectId, workflows, reset]);
+
+  useEffect(() => {
+    if (!projectId || !activeProject || !lastProToolsSessionCreated) return;
+    if (!lastProToolsSessionCreated.location) return;
+    const matchesProject =
+      lastProToolsSessionCreated.location.startsWith(activeProject.folderPath);
+    if (matchesProject) {
+      setStatus(projectId, "mix-step-4", "done");
+    }
+  }, [projectId, activeProject, lastProToolsSessionCreated, setStatus]);
 
   const summary = useMemo(() => {
     const total = steps.length;
@@ -223,12 +267,25 @@ export function MixingWorkflowPanel() {
                           {meta.label}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{step.detail}</p>
-                      <p className="text-[11px] text-muted-foreground font-mono">
-                        {timestampLabel}
-                      </p>
+                    <p className="text-xs text-muted-foreground">{step.detail}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono">
+                      {timestampLabel}
+                    </p>
+                    <div className="mt-2">
+                      <label className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Notes
+                      </label>
+                      <textarea
+                        value={step.notes ?? ""}
+                        onChange={(event) =>
+                          setNotes(projectId, step.id, event.target.value)
+                        }
+                        placeholder="Add notes like template, I/O, or routing decisions."
+                        className="mt-1 min-h-[64px] w-full rounded-md border border-border bg-background p-2 text-xs text-foreground shadow-sm outline-none transition focus:border-primary"
+                      />
                     </div>
                   </div>
+                </div>
                   <div className="flex flex-wrap gap-2">
                     {statusOrder.map((status) => {
                       const option = statusMeta[status];
