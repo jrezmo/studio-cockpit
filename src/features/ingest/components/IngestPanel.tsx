@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { isTauri } from "@tauri-apps/api/core";
 import { useStudioStore } from "@/state/store";
@@ -46,6 +47,8 @@ export function IngestPanel() {
     clients,
     clientProjects,
     settings,
+    addIngestRecord,
+    setLastProToolsSessionCreated,
   } = useStudioStore(
     useShallow((s) => ({
       ingestHistory: s.ingestHistory,
@@ -55,6 +58,8 @@ export function IngestPanel() {
       clients: s.clients,
       clientProjects: s.clientProjects,
       settings: s.settings,
+      addIngestRecord: s.addIngestRecord,
+      setLastProToolsSessionCreated: s.setLastProToolsSessionCreated,
     }))
   );
 
@@ -63,6 +68,11 @@ export function IngestPanel() {
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [newSessionName, setNewSessionName] = useState("");
+  const [webSelectedFiles, setWebSelectedFiles] = useState<File[]>([]);
+  const [prepState, setPrepState] = useState<"idle" | "loading" | "error" | "ok">(
+    "idle"
+  );
+  const [prepMessage, setPrepMessage] = useState("");
 
   const supportsDialog = typeof window !== "undefined" && isTauri();
 
@@ -120,11 +130,143 @@ export function IngestPanel() {
   }, [projectsForClient, selectedClientId, selectedProjectId]);
 
   const canPrep = Boolean(
-    sessionPrepFolder &&
+    (sessionPrepFolder || webSelectedFiles.length > 0) &&
       (prepMode === "existing"
         ? selectedSessionId
         : newSessionName.trim().length > 0)
   );
+
+  const webFolderLabel = useMemo(() => {
+    if (!webSelectedFiles.length) return "";
+    const first = webSelectedFiles[0];
+    if (!first?.webkitRelativePath) return "Selected Folder";
+    const [top] = first.webkitRelativePath.split("/");
+    return top || "Selected Folder";
+  }, [webSelectedFiles]);
+
+  const sourceFolder =
+    sessionPrepFolder || (webFolderLabel ? `${webFolderLabel} (browser)` : "") || settings.downloadsPath;
+
+  function getFolderLabel(path: string) {
+    const cleaned = path.trim().replace(/\/+$/, "");
+    const parts = cleaned.split(/[\\/]/).filter(Boolean);
+    return parts[parts.length - 1] || cleaned || "Session Files";
+  }
+
+  function buildSessionLocation() {
+    if (prepMode === "existing" && activeSession?.path) {
+      return activeSession.path;
+    }
+    const clientName = activeClient?.name || "Unassigned Client";
+    const projectName = activeProject?.name || newSessionName || "New Session";
+    const base = settings.artistFoldersPath || "/Volumes/Studio/Artists";
+    return `${base}/${clientName}/${projectName}/Sessions`;
+  }
+
+  function addPrepRecord(
+    targetPath: string,
+    status: "success" | "error",
+    message?: string
+  ) {
+    const fileLabel = getFolderLabel(sourceFolder);
+    const fileCount = webSelectedFiles.length;
+    const fileCountLabel =
+      !sessionPrepFolder && fileCount > 0 ? ` (${fileCount} files)` : "";
+    addIngestRecord({
+      id: crypto.randomUUID(),
+      fileName: `Session Prep — ${fileLabel}${fileCountLabel}`,
+      sourcePath: sourceFolder,
+      destPath: targetPath,
+      fileType: "ptx",
+      status,
+      sizeBytes: 0,
+      ingestedAt: new Date().toISOString(),
+    });
+    if (message && status === "error") {
+      console.warn("Session prep error:", message);
+    }
+  }
+
+  async function handlePrep() {
+    if (!sessionPrepFolder && !webFolderLabel) {
+      setPrepState("error");
+      setPrepMessage("Select a source folder to continue.");
+      return;
+    }
+
+    setPrepState("loading");
+    setPrepMessage("");
+
+    if (prepMode === "existing") {
+      if (!selectedSessionId) {
+        setPrepState("error");
+        setPrepMessage("Select an existing session to continue.");
+        return;
+      }
+      const targetPath = buildSessionLocation();
+      addPrepRecord(targetPath, "success");
+      setPrepState("ok");
+      setPrepMessage(
+        webSelectedFiles.length
+          ? `Prep queued with ${webSelectedFiles.length} files.`
+          : "Prep queued for the selected session."
+      );
+      return;
+    }
+
+    if (!newSessionName.trim()) {
+      setPrepState("error");
+      setPrepMessage("Enter a new session name to continue.");
+      return;
+    }
+
+    const targetLocation = buildSessionLocation();
+    try {
+      const response = await fetch("/api/protools/project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session: {
+            name: newSessionName.trim(),
+            location: targetLocation,
+            fileType: "FType_WAVE",
+            sampleRate: "SRate_48000",
+            bitDepth: "BDepth_24",
+            ioSettings: "IOSettings_Last",
+            interleaved: true,
+          },
+          tracks: {
+            names: [],
+            type: "TType_Audio",
+            format: "TFormat_Stereo",
+            timebase: "TTimebase_Samples",
+          },
+        }),
+      });
+      const result = (await response.json()) as { ok: boolean; error?: string };
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to create session.");
+      }
+      setLastProToolsSessionCreated({
+        name: newSessionName.trim(),
+        location: targetLocation,
+        createdAt: new Date().toISOString(),
+      });
+      addPrepRecord(targetLocation, "success");
+      setPrepState("ok");
+      setPrepMessage(
+        webSelectedFiles.length
+          ? `Session created and prep queued with ${webSelectedFiles.length} files.`
+          : "Session created and prep queued."
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create session.";
+      setPrepState("error");
+      setPrepMessage(message);
+      addPrepRecord(targetLocation, "error", message);
+    }
+  }
 
   async function handleBrowse() {
     if (!supportsDialog) return;
@@ -132,6 +274,11 @@ export function IngestPanel() {
     if (typeof selection === "string") {
       setSessionPrepFolder(selection);
     }
+  }
+
+  function handleWebFolderChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    setWebSelectedFiles(files);
   }
 
   return (
@@ -174,7 +321,7 @@ export function IngestPanel() {
             <p className="text-[10px] text-muted-foreground">
               {supportsDialog
                 ? "Select the folder containing the files you want to prep."
-                : "Manual entry required in web preview mode."}
+                : "Use the folder picker below when running in the browser."}
             </p>
           </div>
           <Button
@@ -189,6 +336,42 @@ export function IngestPanel() {
             Browse
           </Button>
         </div>
+        {!supportsDialog && (
+          <div className="rounded-md border border-border bg-secondary/40 px-3 py-2">
+            <Label htmlFor="session-prep-folder-web" className="text-[10px] uppercase tracking-wide">
+              Browser Folder Picker
+            </Label>
+            <input
+              id="session-prep-folder-web"
+              type="file"
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore - non-standard webkitdirectory for folder selection
+              webkitdirectory="true"
+              multiple
+              onChange={handleWebFolderChange}
+              className="mt-2 w-full text-xs"
+            />
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              {webSelectedFiles.length
+                ? `Selected ${webSelectedFiles.length} file(s) from ${webFolderLabel}.`
+                : "Select a local folder to attach its files."}
+            </p>
+            {webSelectedFiles.length > 0 && (
+              <div className="mt-2 space-y-1 text-[10px] text-muted-foreground">
+                {webSelectedFiles.slice(0, 6).map((file) => (
+                  <p key={file.name + file.size} className="truncate font-mono">
+                    {file.webkitRelativePath || file.name}
+                  </p>
+                ))}
+                {webSelectedFiles.length > 6 ? (
+                  <p className="text-[10px] text-muted-foreground">
+                    + {webSelectedFiles.length - 6} more files
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg border border-border bg-card p-5 space-y-4">
@@ -357,15 +540,27 @@ export function IngestPanel() {
               Review the source folder and target before running the prep.
             </p>
           </div>
-          <Button size="sm" disabled={!canPrep}>
+          <Button size="sm" disabled={!canPrep || prepState === "loading"} onClick={handlePrep}>
             {prepMode === "existing" ? "Prep Files" : "Create & Prep"}
           </Button>
         </div>
+        {prepMessage ? (
+          <p
+            className={cn(
+              "rounded-md border px-3 py-2 text-xs",
+              prepState === "error"
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "border-border bg-secondary/40 text-muted-foreground"
+            )}
+          >
+            {prepMessage}
+          </p>
+        ) : null}
         <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
           <div className="rounded-md border border-border bg-secondary/40 px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide">Source Folder</p>
             <p className="text-sm font-semibold text-foreground truncate">
-              {sessionPrepFolder || settings.downloadsPath}
+              {sourceFolder}
             </p>
           </div>
           <div className="rounded-md border border-border bg-secondary/40 px-3 py-2">
