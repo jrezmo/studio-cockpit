@@ -9,8 +9,7 @@
     "lint": "eslint",
     "db:export": "node scripts/export-db.js",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "extract": "ts-node scripts/extract-session-info.ts"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",

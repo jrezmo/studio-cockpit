@@ -1,6 +1,8 @@
 mod ingest;
+mod extractor;
 
 use ingest::{start_ingest_watcher, stop_ingest_watcher, IngestWatcherState};
+use extractor::extract_sessions_from_folder;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -18,7 +20,8 @@ pub fn run() {
     })
     .invoke_handler(tauri::generate_handler![
       start_ingest_watcher,
-      stop_ingest_watcher
+      stop_ingest_watcher,
+      extract_sessions_from_folder
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

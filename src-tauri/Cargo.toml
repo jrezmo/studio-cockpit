@@ -26,3 +26,6 @@ tauri-plugin-log = "2"
 notify = "6.1"
 walkdir = "2.5"
 zip = "2.2"
+quick-xml = "0.39.0"
+chrono = { version = "0.4.43", features = ["serde"] }
+md5 = "0.8.0"

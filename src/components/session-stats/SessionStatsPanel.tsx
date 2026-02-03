@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { invoke } from "@tauri-apps/api";
+import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/api/dialog";
 import { useStudioStore } from "@/lib/store";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useFetch } from "@/hooks/useFetch";
@@ -14,10 +17,12 @@ import {
 import type { SessionStatsData, SessionStatsSession } from "@/lib/session-stats/types";
 import { SessionStatsDetail } from "@/components/session-stats/SessionStatsDetail";
 import { SessionStatsIngestForm } from "@/components/session-stats/SessionStatsIngestForm";
+import { SessionStatsExtractorPanel } from "@/components/session-stats/SessionExtractorPanel";
 import { SessionStatsList } from "@/components/session-stats/SessionStatsList";
 import { SessionStatsSearch } from "@/components/session-stats/SessionStatsSearch";
 
 type DetailTab = "overview" | "tracks" | "plugins";
+
 
 function getSessionTime(session: SessionStatsSession) {
   return session.updatedAt ?? session.createdAt ?? "";
@@ -45,10 +50,13 @@ export function SessionStatsPanel() {
   const [ingestPayload, setIngestPayload] = useState("");
   const [ingestState, setIngestState] = useState<"idle" | "loading" | "error" | "ok">("idle");
   const [ingestMessage, setIngestMessage] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractMessage, setExtractMessage] = useState("");
 
   const { loading, error: loadingError } = useFetch<SessionStatsData>(
     "/api/session-stats",
     {
+
       retries: 2,
       delayMs: 400,
       errorMessage: "Unable to load session stats.",
@@ -67,6 +75,45 @@ export function SessionStatsPanel() {
       errorMessage: "Ingest failed.",
     }
   );
+
+  const ingestSession = useCallback(async (session: SessionStatsSession) => {
+    const result = await mutateSessionStats({
+      action: "ingestSessions",
+      payload: session,
+    });
+    if (result.ok && result.data) {
+      setSessionStatsData(result.data);
+    }
+  }, [mutateSessionStats, setSessionStatsData]);
+
+
+  useEffect(() => {
+    let unlistenExtracted: (() => void) | undefined;
+    let unlistenFinished: (() => void) | undefined;
+    let unlistenError: (() => void) | undefined;
+
+    const setupListeners = async () => {
+      unlistenExtracted = await listen("session:extracted", (event) => {
+        ingestSession(event.payload as SessionStatsSession);
+        setExtractMessage(`Imported: ${(event.payload as SessionStatsSession).name}`);
+      });
+      unlistenFinished = await listen("session:finished", (event) => {
+        setIsExtracting(false);
+        setExtractMessage(event.payload as string);
+      });
+      unlistenError = await listen("session:error", (event) => {
+        setExtractMessage(`Error: ${event.payload as string}`);
+      });
+    };
+
+    setupListeners();
+
+    return () => {
+      unlistenExtracted?.();
+      unlistenFinished?.();
+      unlistenError?.();
+    };
+  }, [ingestSession]);
 
   const pluginTotals = useMemo(
     () => aggregatePlugins(sessionStatsSessions),
@@ -165,6 +212,18 @@ export function SessionStatsPanel() {
     }
   }
 
+  async function handleExtract() {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+    });
+    if (typeof selected === 'string') {
+      setIsExtracting(true);
+      setExtractMessage("Scanning folder...");
+      await invoke("extract_sessions_from_folder", { path: selected });
+    }
+  }
+
   return (
     <div className="space-y-6">
       <SessionStatsSearch
@@ -189,18 +248,25 @@ export function SessionStatsPanel() {
       />
 
       {showIngest && (
-        <SessionStatsIngestForm
-          ingestState={ingestState}
-          ingestMessage={ingestMessage}
-          ingestPayload={ingestPayload}
-          onPayloadChange={setIngestPayload}
-          onIngest={handleIngest}
-          onClear={() => {
-            setIngestPayload("");
-            setIngestState("idle");
-            setIngestMessage("");
-          }}
-        />
+        <div className="space-y-4">
+          <SessionExtractorPanel
+            onExtract={handleExtract}
+            isExtracting={isExtracting}
+            message={extractMessage}
+          />
+          <SessionStatsIngestForm
+            ingestState={ingestState}
+            ingestMessage={ingestMessage}
+            ingestPayload={ingestPayload}
+            onPayloadChange={setIngestPayload}
+            onIngest={handleIngest}
+            onClear={() => {
+              setIngestPayload("");
+              setIngestState("idle");
+              setIngestMessage("");
+            }}
+          />
+        </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
@@ -221,8 +287,7 @@ export function SessionStatsPanel() {
 
       <Separator />
       <p className="text-xs text-muted-foreground">
-        Session Stats ingests JSON exports today. Wire the extractor to
-        `/api/session-stats` to index new sessions automatically.
+        Use the "Import from Folder" tool to scan a directory for Pro Tools sessions.
       </p>
     </div>
   );
