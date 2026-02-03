@@ -1,23 +1,34 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { readCodexData, writeCodexData, upsertCodexSessions } from "@/lib/codex/storage";
-import { normalizeSession } from "@/lib/codex/utils";
-import type { CodexIngestPayload, CodexSession, CodexData } from "@/lib/codex/types";
+import {
+  readSessionStatsData,
+  writeSessionStatsData,
+  upsertSessionStatsSessions,
+} from "@/lib/session-stats/storage";
+import { normalizeSession } from "@/lib/session-stats/utils";
+import type {
+  SessionStatsIngestPayload,
+  SessionStatsSession,
+  SessionStatsData,
+} from "@/lib/session-stats/types";
 
 export const runtime = "nodejs";
 
-type CodexAction =
-  | { action: "ingestSessions"; payload: CodexIngestPayload | { sessions: CodexSession[] } }
-  | { action: "replaceSessions"; payload: CodexSession[] };
+type SessionStatsAction =
+  | {
+      action: "ingestSessions";
+      payload: SessionStatsIngestPayload | { sessions: SessionStatsSession[] };
+    }
+  | { action: "replaceSessions"; payload: SessionStatsSession[] };
 
 export async function GET() {
-  const data = await readCodexData();
+  const data = await readSessionStatsData();
   return NextResponse.json({ ok: true, data });
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as CodexAction;
+  const body = (await request.json()) as SessionStatsAction;
 
   if (!body || !("action" in body)) {
     return NextResponse.json(
@@ -29,13 +40,13 @@ export async function POST(request: Request) {
   switch (body.action) {
     case "ingestSessions": {
       const payload = body.payload;
-      let sessions: CodexSession[] = [];
+      let sessions: SessionStatsSession[] = [];
       if (Array.isArray(payload)) {
         sessions = payload;
       } else if (payload && "sessions" in payload) {
         sessions = payload.sessions;
       } else if (payload) {
-        sessions = [payload as CodexSession];
+        sessions = [payload as SessionStatsSession];
       }
       if (!sessions.length) {
         return NextResponse.json(
@@ -43,16 +54,16 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      const data = await upsertCodexSessions(sessions);
+      const data = await upsertSessionStatsSessions(sessions);
       return NextResponse.json({ ok: true, data });
     }
     case "replaceSessions": {
       const sessions = body.payload ?? [];
-      const data: CodexData = {
+      const data: SessionStatsData = {
         sessions: sessions.map((session) => normalizeSession(session)),
         lastIngestedAt: new Date().toISOString(),
       };
-      await writeCodexData(data);
+      await writeSessionStatsData(data);
       return NextResponse.json({ ok: true, data });
     }
     default:

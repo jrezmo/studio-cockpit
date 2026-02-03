@@ -1,10 +1,10 @@
-import type { CodexData } from "./types";
+import type { SessionStatsData } from "./types";
 import { normalizeSession } from "./utils";
 
-export const seedCodexData: CodexData = {
+export const seedSessionStatsData: SessionStatsData = {
   sessions: [
     normalizeSession({
-      id: "codex-session-1",
+      id: "session-stats-session-1",
       fingerprint: "midnight-electric|mix-v8",
       name: "Midnight Electric - Mix v8",
       artist: "Ava Monroe",
@@ -100,7 +100,7 @@ export const seedCodexData: CodexData = {
       ],
     }),
     normalizeSession({
-      id: "codex-session-2",
+      id: "session-stats-session-2",
       fingerprint: "brass-bones|tracking",
       name: "Brass & Bones - Tracking Day 03",
       artist: "The Velvet Horns",
@@ -180,7 +180,7 @@ export const seedCodexData: CodexData = {
       ],
     }),
     normalizeSession({
-      id: "codex-session-3",
+      id: "session-stats-session-3",
       fingerprint: "low-frequency|master",
       name: "Low Frequency - Master Rev 2",
       artist: "DJ Kael",

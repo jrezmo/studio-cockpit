@@ -1,38 +1,38 @@
-# Session Codex Documentation
+# Session Stats Documentation
 
-This document defines the **Session Codex** framework: data model, storage, ingestion, and API contracts.
+This document defines the **Session Stats** framework: data model, storage, ingestion, and API contracts.
 It is intended as a living source of truth for future development (extractors, DB migrations, search, and UX).
 
 ## Overview
-The Session Codex is a searchable index of Pro Tools sessions and their contents (tracks + plugins).
+Session Stats is a searchable index of Pro Tools sessions and their contents (tracks + plugins).
 The goal is to answer questions like:
 - How many times has a plugin been used, per session and across sessions?
 - Which sessions use a given plugin?
 - What tracks and sessions exist in a specific archive?
 
-The current implementation is an in-app JSON store (`data/codex.json`) with an ingestion API
+The current implementation is an in-app JSON store (`data/session-stats.json`) with an ingestion API
 that normalizes incoming data and derives plugin usage.
 
 ## Storage
-- Current storage file: `data/codex.json`
-- Loader/writer: `src/lib/codex/storage.ts`
-- Seed data: `src/lib/codex/seed.ts`
-- Primary API: `src/app/api/codex/route.ts`
+- Current storage file: `data/session-stats.json`
+- Loader/writer: `src/lib/session-stats/storage.ts`
+- Seed data: `src/lib/session-stats/seed.ts`
+- Primary API: `src/app/api/session-stats/route.ts`
 
 ## Data Model
-Source of truth types live in `src/lib/codex/types.ts`.
+Source of truth types live in `src/lib/session-stats/types.ts`.
 
-### CodexData
+### SessionStatsData
 ```ts
-type CodexData = {
-  sessions: CodexSession[];
+type SessionStatsData = {
+  sessions: SessionStatsSession[];
   lastIngestedAt?: string;
 };
 ```
 
-### CodexSession
+### SessionStatsSession
 ```ts
-type CodexSession = {
+type SessionStatsSession = {
   id: string;
   fingerprint: string;
   name: string;
@@ -48,27 +48,27 @@ type CodexSession = {
   durationSeconds?: number;
   notes?: string;
   tags?: string[];
-  tracks: CodexTrack[];
-  plugins: CodexPluginUsage[];
-  sources?: CodexSessionSource[];
+  tracks: SessionStatsTrack[];
+  plugins: SessionStatsPluginUsage[];
+  sources?: SessionStatsSessionSource[];
 };
 ```
 
-### CodexTrack
+### SessionStatsTrack
 ```ts
-type CodexTrack = {
+type SessionStatsTrack = {
   id: string;
   name: string;
   type?: string;
   format?: string;
-  plugins?: CodexPluginInstance[];
+  plugins?: SessionStatsPluginInstance[];
   notes?: string;
 };
 ```
 
-### CodexPluginInstance
+### SessionStatsPluginInstance
 ```ts
-type CodexPluginInstance = {
+type SessionStatsPluginInstance = {
   pluginId?: string;
   name: string;
   vendor?: string;
@@ -80,9 +80,9 @@ type CodexPluginInstance = {
 };
 ```
 
-### CodexPluginUsage
+### SessionStatsPluginUsage
 ```ts
-type CodexPluginUsage = {
+type SessionStatsPluginUsage = {
   pluginId: string;
   name: string;
   vendor?: string;
@@ -93,9 +93,9 @@ type CodexPluginUsage = {
 };
 ```
 
-### CodexSessionSource
+### SessionStatsSessionSource
 ```ts
-type CodexSessionSource = {
+type SessionStatsSessionSource = {
   type: "protools" | "archive" | "manual" | "import";
   path?: string;
   ingestedAt?: string;
@@ -104,7 +104,7 @@ type CodexSessionSource = {
 ```
 
 ## Invariants and Derived Fields
-Normalization lives in `src/lib/codex/utils.ts` and is applied on read/write.
+Normalization lives in `src/lib/session-stats/utils.ts` and is applied on read/write.
 
 ### Fingerprint
 `fingerprint` is used as the stable key for upserts. If it is not provided:
@@ -124,13 +124,13 @@ the system derives `plugins` by counting instances across tracks.
 
 ## Ingestion
 ### API
-`POST /api/codex`
+`POST /api/session-stats`
 
 Supported actions:
 ```json
-{ "action": "ingestSessions", "payload": { "sessions": [/* CodexSession */] } }
-{ "action": "ingestSessions", "payload": {/* single CodexSession */} }
-{ "action": "replaceSessions", "payload": [/* CodexSession */] }
+{ "action": "ingestSessions", "payload": { "sessions": [/* SessionStatsSession */] } }
+{ "action": "ingestSessions", "payload": {/* single SessionStatsSession */} }
+{ "action": "replaceSessions", "payload": [/* SessionStatsSession */] }
 ```
 
 ### Minimal Ingest Example
@@ -168,7 +168,7 @@ If you are mapping from a Pro Tools or archive extractor:
 - Pro Tools source metadata → `sources[]` with `type="protools"` and `extractor`
 
 If your extractor can compute plugin usage, set `plugins[]` directly.
-Otherwise, send track-level plugin instances and let the codex derive it.
+Otherwise, send track-level plugin instances and let Session Stats derive it.
 
 ## Search and Aggregation
 The UI currently computes:
@@ -181,19 +181,19 @@ Core helpers:
 - `getSessionTotals(session)` for per-session counts
 
 ## UI Integration
-The Codex panel lives at:
-- `src/components/codex/CodexPanel.tsx`
+The Session Stats panel lives at:
+- `src/components/session-stats/SessionStatsPanel.tsx`
 
 The store fields are:
 ```ts
-codexSessions: CodexSession[];
-codexLastIngestedAt: string | null;
-setCodexData: (data: CodexData) => void;
+sessionStatsSessions: SessionStatsSession[];
+sessionStatsLastIngestedAt: string | null;
+setSessionStatsData: (data: SessionStatsData) => void;
 ```
 
 ## Extending the System
 Recommended next steps:
-1. Replace `data/codex.json` with SQLite (or Postgres) for scale.
+1. Replace `data/session-stats.json` with SQLite (or Postgres) for scale.
 2. Add indexing for plugin vendor/version filters.
 3. Add a server-side ingest pipeline for archive scanning.
 4. Add migrations: `schema_version` and a migration runner.
@@ -203,7 +203,7 @@ If/when moving to SQL, a normalized schema could look like:
 
 ```sql
 -- sessions
-CREATE TABLE codex_sessions (
+CREATE TABLE session_stats_sessions (
   id TEXT PRIMARY KEY,
   fingerprint TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
@@ -221,9 +221,9 @@ CREATE TABLE codex_sessions (
 );
 
 -- tracks
-CREATE TABLE codex_tracks (
+CREATE TABLE session_stats_tracks (
   id TEXT PRIMARY KEY,
-  session_id TEXT NOT NULL REFERENCES codex_sessions(id),
+  session_id TEXT NOT NULL REFERENCES session_stats_sessions(id),
   name TEXT NOT NULL,
   type TEXT,
   format TEXT,
@@ -231,7 +231,7 @@ CREATE TABLE codex_tracks (
 );
 
 -- plugins (unique definitions)
-CREATE TABLE codex_plugins (
+CREATE TABLE session_stats_plugins (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   vendor TEXT,
@@ -240,19 +240,19 @@ CREATE TABLE codex_plugins (
 );
 
 -- track plugin instances
-CREATE TABLE codex_track_plugins (
+CREATE TABLE session_stats_track_plugins (
   id TEXT PRIMARY KEY,
-  track_id TEXT NOT NULL REFERENCES codex_tracks(id),
-  plugin_id TEXT NOT NULL REFERENCES codex_plugins(id),
+  track_id TEXT NOT NULL REFERENCES session_stats_tracks(id),
+  plugin_id TEXT NOT NULL REFERENCES session_stats_plugins(id),
   slot TEXT,
   preset TEXT,
   active INTEGER
 );
 
 -- session plugin usage summary
-CREATE TABLE codex_session_plugins (
-  session_id TEXT NOT NULL REFERENCES codex_sessions(id),
-  plugin_id TEXT NOT NULL REFERENCES codex_plugins(id),
+CREATE TABLE session_stats_session_plugins (
+  session_id TEXT NOT NULL REFERENCES session_stats_sessions(id),
+  plugin_id TEXT NOT NULL REFERENCES session_stats_plugins(id),
   count INTEGER NOT NULL,
   track_count INTEGER NOT NULL,
   PRIMARY KEY (session_id, plugin_id)

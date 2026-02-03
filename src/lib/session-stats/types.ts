@@ -1,4 +1,4 @@
-export type CodexPluginInstance = {
+export type SessionStatsPluginInstance = {
   pluginId?: string;
   name: string;
   vendor?: string;
@@ -9,16 +9,16 @@ export type CodexPluginInstance = {
   active?: boolean;
 };
 
-export type CodexTrack = {
+export type SessionStatsTrack = {
   id: string;
   name: string;
   type?: string;
   format?: string;
-  plugins?: CodexPluginInstance[];
+  plugins?: SessionStatsPluginInstance[];
   notes?: string;
 };
 
-export type CodexPluginUsage = {
+export type SessionStatsPluginUsage = {
   pluginId: string;
   name: string;
   vendor?: string;
@@ -28,14 +28,14 @@ export type CodexPluginUsage = {
   trackCount: number;
 };
 
-export type CodexSessionSource = {
+export type SessionStatsSessionSource = {
   type: "protools" | "archive" | "manual" | "import";
   path?: string;
   ingestedAt?: string;
   extractor?: string;
 };
 
-export type CodexSession = {
+export type SessionStatsSession = {
   id: string;
   fingerprint: string;
   name: string;
@@ -51,14 +51,16 @@ export type CodexSession = {
   durationSeconds?: number;
   notes?: string;
   tags?: string[];
-  tracks: CodexTrack[];
-  plugins: CodexPluginUsage[];
-  sources?: CodexSessionSource[];
+  tracks: SessionStatsTrack[];
+  plugins: SessionStatsPluginUsage[];
+  sources?: SessionStatsSessionSource[];
 };
 
-export type CodexData = {
-  sessions: CodexSession[];
+export type SessionStatsData = {
+  sessions: SessionStatsSession[];
   lastIngestedAt?: string;
 };
 
-export type CodexIngestPayload = CodexSession | CodexSession[];
+export type SessionStatsIngestPayload =
+  | SessionStatsSession
+  | SessionStatsSession[];

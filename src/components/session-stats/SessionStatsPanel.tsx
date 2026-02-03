@@ -9,8 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { aggregatePlugins, buildSearchText, getSessionTotals } from "@/lib/codex/utils";
-import type { CodexSession } from "@/lib/codex/types";
+import {
+  aggregatePlugins,
+  buildSearchText,
+  getSessionTotals,
+} from "@/lib/session-stats/utils";
+import type { SessionStatsSession } from "@/lib/session-stats/types";
 import { formatDistanceToNow } from "date-fns";
 import {
   BookOpen,
@@ -32,16 +36,20 @@ function formatRelative(value?: string) {
   return formatDistanceToNow(date, { addSuffix: true });
 }
 
-function getSessionTime(session: CodexSession) {
+function getSessionTime(session: SessionStatsSession) {
   return session.updatedAt ?? session.createdAt ?? "";
 }
 
-export function CodexPanel() {
-  const { codexSessions, codexLastIngestedAt, setCodexData } = useStudioStore(
+export function SessionStatsPanel() {
+  const {
+    sessionStatsSessions,
+    sessionStatsLastIngestedAt,
+    setSessionStatsData,
+  } = useStudioStore(
     useShallow((s) => ({
-      codexSessions: s.codexSessions,
-      codexLastIngestedAt: s.codexLastIngestedAt,
-      setCodexData: s.setCodexData,
+      sessionStatsSessions: s.sessionStatsSessions,
+      sessionStatsLastIngestedAt: s.sessionStatsLastIngestedAt,
+      setSessionStatsData: s.setSessionStatsData,
     }))
   );
 
@@ -60,19 +68,19 @@ export function CodexPanel() {
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    fetch("/api/codex")
+    fetch("/api/session-stats")
       .then((response) => response.json())
       .then((result) => {
         if (!isMounted) return;
         if (result?.ok && result?.data) {
-          setCodexData(result.data);
+          setSessionStatsData(result.data);
           setLoadingError("");
         } else {
-          setLoadingError(result?.error || "Unable to load codex data.");
+          setLoadingError(result?.error || "Unable to load session stats.");
         }
       })
       .catch(() => {
-        if (isMounted) setLoadingError("Unable to load codex data.");
+        if (isMounted) setLoadingError("Unable to load session stats.");
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -80,35 +88,35 @@ export function CodexPanel() {
     return () => {
       isMounted = false;
     };
-  }, [setCodexData]);
+  }, [setSessionStatsData]);
 
   const pluginTotals = useMemo(
-    () => aggregatePlugins(codexSessions),
-    [codexSessions]
+    () => aggregatePlugins(sessionStatsSessions),
+    [sessionStatsSessions]
   );
 
   const totalTracks = useMemo(
     () =>
-      codexSessions.reduce(
+      sessionStatsSessions.reduce(
         (total, session) => total + getSessionTotals(session).trackCount,
         0
       ),
-    [codexSessions]
+    [sessionStatsSessions]
   );
 
   const totalPluginInstances = useMemo(
     () =>
-      codexSessions.reduce(
+      sessionStatsSessions.reduce(
         (total, session) => total + getSessionTotals(session).pluginInstances,
         0
       ),
-    [codexSessions]
+    [sessionStatsSessions]
   );
 
   const filteredSessions = useMemo(() => {
     const query = search.trim().toLowerCase();
     const pluginFilter = pluginQuery.trim().toLowerCase();
-    return codexSessions.filter((session) => {
+    return sessionStatsSessions.filter((session) => {
       const matchesSearch = !query || buildSearchText(session).includes(query);
       const matchesPlugin =
         !pluginFilter ||
@@ -117,7 +125,7 @@ export function CodexPanel() {
         );
       return matchesSearch && matchesPlugin;
     });
-  }, [codexSessions, search, pluginQuery]);
+  }, [sessionStatsSessions, search, pluginQuery]);
 
   const sortedSessions = useMemo(() => {
     const sessions = [...filteredSessions];
@@ -168,14 +176,14 @@ export function CodexPanel() {
     }
 
     try {
-      const response = await fetch("/api/codex", {
+      const response = await fetch("/api/session-stats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "ingestSessions", payload }),
       });
       const result = await response.json();
       if (result?.ok && result?.data) {
-        setCodexData(result.data);
+        setSessionStatsData(result.data);
         setIngestState("ok");
         setIngestMessage("Sessions ingested and indexed.");
         setIngestPayload("");
@@ -194,7 +202,7 @@ export function CodexPanel() {
       <div className="rounded-lg border border-border bg-card p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold">Session Codex</h2>
+            <h2 className="text-sm font-semibold">Session Stats</h2>
             <p className="text-xs text-muted-foreground">
               Search across sessions, tracks, and plugins. Build a long-term memory
               of every mix decision.
@@ -246,9 +254,9 @@ export function CodexPanel() {
               <Database className="h-3.5 w-3.5" />
               Indexed Sessions
             </div>
-            <p className="mt-2 text-lg font-semibold">{codexSessions.length}</p>
+            <p className="mt-2 text-lg font-semibold">{sessionStatsSessions.length}</p>
             <p className="text-[10px] text-muted-foreground font-mono">
-              Last ingest {formatRelative(codexLastIngestedAt ?? undefined)}
+              Last ingest {formatRelative(sessionStatsLastIngestedAt ?? undefined)}
             </p>
           </div>
           <div className="rounded-md border border-border bg-secondary/40 p-3">
@@ -268,7 +276,7 @@ export function CodexPanel() {
             </div>
             <p className="mt-2 text-lg font-semibold">{totalTracks}</p>
             <p className="text-[10px] text-muted-foreground font-mono">
-              Across {codexSessions.length} sessions
+              Across {sessionStatsSessions.length} sessions
             </p>
           </div>
         </div>
@@ -634,8 +642,8 @@ export function CodexPanel() {
 
       <Separator />
       <p className="text-xs text-muted-foreground">
-        Codex ingests JSON exports today. Wire the extractor to `/api/codex` to
-        index new sessions automatically.
+        Session Stats ingests JSON exports today. Wire the extractor to
+        `/api/session-stats` to index new sessions automatically.
       </p>
     </div>
   );

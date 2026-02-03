@@ -1,8 +1,8 @@
 import type {
-  CodexPluginInstance,
-  CodexPluginUsage,
-  CodexSession,
-  CodexTrack,
+  SessionStatsPluginInstance,
+  SessionStatsPluginUsage,
+  SessionStatsSession,
+  SessionStatsTrack,
 } from "./types";
 
 function sanitize(value?: string) {
@@ -19,7 +19,12 @@ export function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function buildPluginId(plugin: Pick<CodexPluginInstance, "name" | "vendor" | "version" | "format">) {
+export function buildPluginId(
+  plugin: Pick<
+    SessionStatsPluginInstance,
+    "name" | "vendor" | "version" | "format"
+  >
+) {
   const name = sanitize(plugin.name) || "unknown";
   const parts = [plugin.vendor, name, plugin.version, plugin.format]
     .map(lower)
@@ -28,8 +33,8 @@ export function buildPluginId(plugin: Pick<CodexPluginInstance, "name" | "vendor
 }
 
 export function normalizePluginInstance(
-  plugin: CodexPluginInstance
-): CodexPluginInstance {
+  plugin: SessionStatsPluginInstance
+): SessionStatsPluginInstance {
   const name = sanitize(plugin.name) || "Unknown Plugin";
   const pluginId = plugin.pluginId || buildPluginId({ ...plugin, name });
   return {
@@ -44,7 +49,7 @@ export function normalizePluginInstance(
   };
 }
 
-export function normalizeTrack(track: CodexTrack): CodexTrack {
+export function normalizeTrack(track: SessionStatsTrack): SessionStatsTrack {
   const plugins = (track.plugins ?? []).map(normalizePluginInstance);
   return {
     ...track,
@@ -57,8 +62,8 @@ export function normalizeTrack(track: CodexTrack): CodexTrack {
   };
 }
 
-export function deriveSessionPlugins(tracks: CodexTrack[]) {
-  const usageMap = new Map<string, CodexPluginUsage>();
+export function deriveSessionPlugins(tracks: SessionStatsTrack[]) {
+  const usageMap = new Map<string, SessionStatsPluginUsage>();
 
   tracks.forEach((track) => {
     const seenOnTrack = new Set<string>();
@@ -91,7 +96,9 @@ export function deriveSessionPlugins(tracks: CodexTrack[]) {
   return Array.from(usageMap.values()).sort((a, b) => b.count - a.count);
 }
 
-export function normalizeSession(session: Partial<CodexSession>): CodexSession {
+export function normalizeSession(
+  session: Partial<SessionStatsSession>
+): SessionStatsSession {
   const id = session.id || createId("session");
   const name = sanitize(session.name) || "Untitled Session";
   const tracks = (session.tracks ?? []).map(normalizeTrack);
@@ -147,10 +154,10 @@ export function normalizeSession(session: Partial<CodexSession>): CodexSession {
 }
 
 export function mergeSessions(
-  existing: CodexSession[],
-  incoming: CodexSession[]
+  existing: SessionStatsSession[],
+  incoming: SessionStatsSession[]
 ) {
-  const merged = new Map<string, CodexSession>();
+  const merged = new Map<string, SessionStatsSession>();
   existing.forEach((session) => merged.set(session.fingerprint, session));
 
   incoming.forEach((session) => {
@@ -172,7 +179,7 @@ export function mergeSessions(
   return Array.from(merged.values());
 }
 
-export function buildSearchText(session: CodexSession) {
+export function buildSearchText(session: SessionStatsSession) {
   const trackNames = session.tracks.map((track) => track.name).join(" ");
   const pluginNames = session.plugins
     .map((plugin) => `${plugin.name} ${plugin.vendor ?? ""}`)
@@ -191,7 +198,7 @@ export function buildSearchText(session: CodexSession) {
     .toLowerCase();
 }
 
-export function getSessionTotals(session: CodexSession) {
+export function getSessionTotals(session: SessionStatsSession) {
   const trackCount = session.tracks.length;
   const uniquePlugins = session.plugins.length;
   const pluginInstances = session.plugins.reduce(
@@ -212,7 +219,7 @@ export type PluginAggregate = {
   trackCount: number;
 };
 
-export function aggregatePlugins(sessions: CodexSession[]) {
+export function aggregatePlugins(sessions: SessionStatsSession[]) {
   const totals = new Map<string, PluginAggregate>();
 
   sessions.forEach((session) => {

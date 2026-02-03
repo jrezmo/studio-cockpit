@@ -20,7 +20,7 @@ const navItems: { id: Panel; label: string; icon: React.ElementType }[] = [
   { id: "clients", label: "Clients", icon: Users },
   { id: "ingest", label: "Ingest Agent", icon: FolderInput },
   { id: "stems", label: "Stem Engine", icon: AudioLines },
-  { id: "codex", label: "Session Codex", icon: BookOpen },
+  { id: "sessionStats", label: "Session Stats", icon: BookOpen },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "protools", label: "Pro Tools", icon: PlugZap },
 ];

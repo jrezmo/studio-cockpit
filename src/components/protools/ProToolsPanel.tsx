@@ -44,7 +44,7 @@ export function ProToolsPanel() {
   const [sessionInfo, setSessionInfo] = useState<string | null>(null);
   const [trackList, setTrackList] = useState<string | null>(null);
   const [markers, setMarkers] = useState<string | null>(null);
-  const [markerName, setMarkerName] = useState("Codex Test");
+  const [markerName, setMarkerName] = useState("Session Stats Test");
   const [markerTime, setMarkerTime] = useState("00:00:01:00");
   const [projectName, setProjectName] = useState("New Session");
   const [projectLocation, setProjectLocation] = useState(
