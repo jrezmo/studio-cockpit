@@ -76,6 +76,23 @@ describe("IngestPanel", () => {
   });
 
   it("queues prep from a browser-selected folder", async () => {
+    mockFetch.mockImplementation((input: RequestInfo) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/session-prep/upload")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true, files: [{ name: "Kick.wav", path: "/tmp/Kick.wav" }] }),
+        });
+      }
+      if (url.includes("/api/session-prep/attach")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true }),
+        });
+      }
+      return Promise.resolve({
+        json: async () => ({ ok: false, error: "Unexpected request" }),
+      });
+    });
+
     render(<IngestPanel />);
 
     const sessionSelect = screen.getByLabelText("Existing Session") as HTMLSelectElement;
@@ -139,7 +156,9 @@ describe("IngestPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "Create & Prep" }));
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
-    expect(await screen.findByText("Session created and prep queued with 1 files.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Session created and imported 1 file(s).")
+    ).toBeInTheDocument();
 
     const { lastProToolsSessionCreated } = useStudioStore.getState();
     expect(lastProToolsSessionCreated?.name).toBe("Session Prep Test");

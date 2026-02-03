@@ -326,7 +326,7 @@ export function IngestPanel() {
       setPrepState("ok");
       setPrepMessage(
         webSelectedFiles.length
-          ? `Session created and prep queued with ${webSelectedFiles.length} files.`
+          ? `Session created and imported ${webSelectedFiles.length} file(s).`
           : "Session created and prep queued."
       );
     } catch (error) {

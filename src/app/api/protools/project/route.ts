@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { mkdir, copyFile } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
 import {
   getAllowWrites,
   hasWritePermissions,
   runMcpTool,
 } from "@/server/protools/mcp";
+import { importAudioToClipList, spotClipsById } from "@/server/protools/import";
 
 export const runtime = "nodejs";
 
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json(sessionResult, { status: 500 });
   }
 
-  const createdTracks: Array<{ name: string; result: unknown }> = [];
+  const createdTracks: Array<{ name: string; result: unknown; trackIds: string[] }> = [];
   if (needsTracks) {
     for (const name of body.tracks.names) {
       if (!name) continue;
@@ -133,27 +134,31 @@ export async function POST(request: Request) {
         );
       }
 
-      createdTracks.push({ name, result: trackResult.result });
+      const responseBody =
+        (trackResult.result as { response?: { response_body?: any } })?.response
+          ?.response_body ?? (trackResult.result as { response_body?: any })?.response_body;
+      const trackIds = Array.isArray(responseBody?.created_track_ids)
+        ? responseBody.created_track_ids
+        : [];
+      createdTracks.push({ name, result: trackResult.result, trackIds });
     }
   }
 
+  let importedClipsCount = 0;
   if (audioFiles.length > 0) {
     const sessionDir = path.resolve(body.session.location);
     const audioDir = path.join(sessionDir, "Audio Files");
-    try {
-      await mkdir(audioDir, { recursive: true });
-      for (const file of audioFiles) {
-        const targetPath = path.join(audioDir, file.name);
-        await copyFile(file.path, targetPath);
-      }
-    } catch (error) {
+    const importResult = await importAudioToClipList(
+      audioFiles.map((file) => file.path),
+      audioDir,
+      "AOperations_CopyAudio"
+    );
+
+    if (!importResult.ok) {
       return NextResponse.json(
         {
           ok: false,
-          error:
-            error instanceof Error
-              ? `Unable to copy audio files: ${error.message}`
-              : "Unable to copy audio files.",
+          error: importResult.error || "Unable to import audio files.",
           result: {
             session: sessionResult.result,
             tracks: createdTracks,
@@ -161,6 +166,46 @@ export async function POST(request: Request) {
         },
         { status: 500 }
       );
+    }
+
+    importedClipsCount = importResult.clips.reduce(
+      (total, clip) => total + clip.clipIds.length,
+      0
+    );
+
+    const trackIdByName = new Map<string, string>();
+    createdTracks.forEach((track) => {
+      if (track.trackIds[0]) {
+        trackIdByName.set(track.name, track.trackIds[0]);
+      }
+    });
+
+    for (const clip of importResult.clips) {
+      const fileName = clip.originalPath.split(/[\\/]/).pop() ?? clip.originalPath;
+      const trackName = fileName.replace(/\.[^/.]+$/, "");
+      const trackId = trackIdByName.get(trackName);
+      if (!trackId || clip.clipIds.length === 0) continue;
+
+      const spotResult = await spotClipsById(clip.clipIds, {
+        trackId,
+        location: "0",
+        timeType: "TLType_Samples",
+        locationType: "SLType_Start",
+      });
+
+      if (!spotResult.ok) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: spotResult.error || "Unable to spot clips onto tracks.",
+            result: {
+              session: sessionResult.result,
+              tracks: createdTracks,
+            },
+          },
+          { status: 500 }
+        );
+      }
     }
   }
 
@@ -170,7 +215,7 @@ export async function POST(request: Request) {
       result: {
         session: sessionResult.result,
         tracks: createdTracks,
-        audioFilesCopied: audioFiles.length,
+        audioFilesImported: importedClipsCount,
       },
     },
     { status: 200 }
