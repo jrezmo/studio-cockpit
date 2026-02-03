@@ -60,6 +60,8 @@ export function StemEngine() {
   const [message, setMessage] = useState<string>("");
   const [printLog, setPrintLog] = useState<string[]>([]);
   const [webSessionFiles, setWebSessionFiles] = useState<File[]>([]);
+  const [webSessionName, setWebSessionName] = useState<string>("");
+  const [webSessionMissing, setWebSessionMissing] = useState(false);
 
   function togglePart(part: string) {
     setSelectedParts((prev) =>
@@ -204,6 +206,13 @@ export function StemEngine() {
                 const sessionFile = files.find((file) =>
                   file.name.toLowerCase().endsWith(".ptx")
                 );
+                if (sessionFile) {
+                  setWebSessionName(sessionFile.name);
+                  setWebSessionMissing(false);
+                } else {
+                  setWebSessionName("");
+                  setWebSessionMissing(files.length > 0);
+                }
                 if (sessionFile?.webkitRelativePath) {
                   const root = sessionFile.webkitRelativePath.split("/")[0];
                   setSessionPath(`${root}/${sessionFile.name}`);
@@ -222,6 +231,15 @@ export function StemEngine() {
             onChange={setOutputDirectory}
           />
         </div>
+        {!supportsDialog && (
+          <div className="text-[10px] text-muted-foreground">
+            {webSessionName
+              ? `Detected session: ${webSessionName}`
+              : webSessionMissing
+                ? "No .ptx file detected in that folder."
+                : "Waiting for a folder selection."}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
