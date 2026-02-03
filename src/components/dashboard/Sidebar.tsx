@@ -8,6 +8,7 @@ import {
   Play,
   AudioLines,
   Settings,
+  PlugZap,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems: { id: Panel; label: string; icon: React.ElementType }[] = [
   { id: "sessions", label: "Session Launcher", icon: Play },
   { id: "stems", label: "Stem Engine", icon: AudioLines },
   { id: "settings", label: "Settings", icon: Settings },
+  { id: "protools", label: "Pro Tools", icon: PlugZap },
 ];
 
 export function Sidebar() {

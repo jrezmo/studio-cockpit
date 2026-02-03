@@ -3,7 +3,13 @@ import { persist } from "zustand/middleware";
 
 export type ProjectStatus = "active" | "mixing" | "review" | "delivered";
 export type IngestStatus = "success" | "pending" | "error";
-export type Panel = "dashboard" | "ingest" | "sessions" | "stems" | "settings";
+export type Panel =
+  | "dashboard"
+  | "ingest"
+  | "sessions"
+  | "stems"
+  | "settings"
+  | "protools";
 
 export interface Project {
   id: string;

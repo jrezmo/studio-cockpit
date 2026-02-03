@@ -8,6 +8,7 @@ const panelTitles: Record<string, string> = {
   sessions: "Session Launcher",
   stems: "Stem Engine",
   settings: "Settings",
+  protools: "Pro Tools",
 };
 
 export function Header() {

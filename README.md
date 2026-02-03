@@ -77,10 +77,59 @@ Open `http://localhost:3000` in your browser.
 Unit tests live in `src/__tests__` and cover utilities and key UI logic.
 Jest is configured via `jest.config.ts` and `jest.setup.ts`.
 
-## Configuration
+## Environment
 
-There are no required environment variables at the moment. If you add any,
-document them in this README under a new **Environment** section.
+Set these when using the Pro Tools MCP panel.
+
+- `PTSL_PROTO_PATH` (required): absolute path to `PTSL.proto`
+- `PROTOOLS_MCP_PATH` (optional): path to `protools-mcp-server/dist/index.js`
+- `PROTOOLS_ALLOW_WRITES` (optional): set to `memory` or `all` to enable write tools
+
+Example:
+
+```bash
+export PTSL_PROTO_PATH="/Users/rezmo/dev/studio-cockpit/PTSL_SDK_CPP.2025.10.0.1232349/Source/PTSL.proto"
+export PROTOOLS_MCP_PATH="/Users/rezmo/dev/studio-cockpit/protools-mcp-server/dist/index.js"
+export PROTOOLS_ALLOW_WRITES="memory"
+```
+
+## Pro Tools MCP Panel
+
+### Run the app
+
+```bash
+npm run dev
+```
+
+Then open `http://localhost:3000` and click the **Pro Tools** panel in the sidebar.
+
+### One-time setup
+
+1. Clone and build the MCP server (sibling to this repo):
+   ```bash
+   git clone https://github.com/skrul/protools-mcp-server.git ../protools-mcp-server
+   cd ../protools-mcp-server
+   npm install
+   npm run build
+   ```
+2. Download the Pro Tools Scripting Library SDK and locate `PTSL.proto`.
+3. Export the environment variables listed above.
+4. Ensure Pro Tools is running.
+
+### Write permissions
+
+`PROTOOLS_ALLOW_WRITES` controls write access. Recommended values:
+- `memory` to allow marker creation
+- `all` for full write access
+
+The New Project builder requires:
+- `session` (CreateSession)
+- `track_structure` (CreateNewTracks)
+
+Example:
+```bash
+export PROTOOLS_ALLOW_WRITES="session,track_structure"
+```
 
 ## Tauri (Desktop App)
 

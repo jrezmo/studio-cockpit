@@ -8,6 +8,7 @@ import { IngestPanel } from "@/components/ingest/IngestPanel";
 import { SessionLauncher } from "@/components/sessions/SessionLauncher";
 import { StemEngine } from "@/components/stems/StemEngine";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { ProToolsPanel } from "@/components/protools/ProToolsPanel";
 
 const panels: Record<string, React.ComponentType> = {
   dashboard: DashboardPanel,
@@ -15,6 +16,7 @@ const panels: Record<string, React.ComponentType> = {
   sessions: SessionLauncher,
   stems: StemEngine,
   settings: SettingsPanel,
+  protools: ProToolsPanel,
 };
 
 export default function Home() {
