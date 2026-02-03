@@ -9,12 +9,13 @@ import { FolderInput, PlugZap, AudioLines, RefreshCw } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
 export function DashboardPanel() {
-  const { projects, ingestHistory, ingestWatcherActive, setActivePanel } =
+  const { projects, ingestHistory, sessionPrepFolder, settings, setActivePanel } =
     useStudioStore(
       useShallow((s) => ({
         projects: s.projects,
         ingestHistory: s.ingestHistory,
-        ingestWatcherActive: s.ingestWatcherActive,
+        sessionPrepFolder: s.sessionPrepFolder,
+        settings: s.settings,
         setActivePanel: s.setActivePanel,
       }))
     );
@@ -24,16 +25,18 @@ export function DashboardPanel() {
     (p) => p.status === "active" || p.status === "mixing"
   ).length;
   const recentErrors = ingestHistory.filter((r) => r.status === "error").length;
+  const prepFolder = sessionPrepFolder || settings.downloadsPath;
+  const prepStatus = sessionPrepFolder ? "Ready" : "Select Folder";
 
   return (
     <div className="space-y-6">
       {/* Status row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatusWidget
-          label="Ingest Agent"
-          value={ingestWatcherActive ? "Watching" : "Paused"}
-          status={ingestWatcherActive ? "green" : "yellow"}
-          detail="~/Downloads"
+          label="Session File Prep"
+          value={prepStatus}
+          status={sessionPrepFolder ? "green" : "yellow"}
+          detail={prepFolder}
         />
         <StatusWidget
           label="Pro Tools"
@@ -48,7 +51,7 @@ export function DashboardPanel() {
           detail={`${formatBytes(totalSize)} total`}
         />
         <StatusWidget
-          label="Ingest Errors"
+          label="Prep Errors"
           value={`${recentErrors}`}
           status={recentErrors > 0 ? "red" : "green"}
           detail={`${ingestHistory.length} files processed`}
@@ -63,7 +66,7 @@ export function DashboardPanel() {
           onClick={() => setActivePanel("ingest")}
         >
           <FolderInput className="mr-2 h-3.5 w-3.5" />
-          Ingest Files
+          Session File Prep
         </Button>
         <Button
           size="sm"

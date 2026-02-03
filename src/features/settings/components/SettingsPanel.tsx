@@ -10,8 +10,8 @@ import { useShallow } from "zustand/react/shallow";
 const pathFields = [
   {
     key: "downloadsPath" as const,
-    label: "Downloads Watch Folder",
-    description: "Ingest Agent monitors this folder for new files",
+    label: "Session Prep Default Folder",
+    description: "Default source folder offered when prepping session files",
     icon: Download,
   },
   {
