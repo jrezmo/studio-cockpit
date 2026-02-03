@@ -157,9 +157,10 @@ export function IngestPanel() {
       return activeSession.path;
     }
     const clientName = activeClient?.name || "Unassigned Client";
-    const projectName = activeProject?.name || newSessionName || "New Session";
+    const projectName = activeProject?.name;
     const base = settings.artistFoldersPath || "/Volumes/Studio/Artists";
-    return `${base}/${clientName}/${projectName}/Sessions`;
+    const projectFolder = projectName ? `/${projectName}` : "";
+    return `${base}/${clientName}${projectFolder}/Sessions`;
   }
 
   function addPrepRecord(

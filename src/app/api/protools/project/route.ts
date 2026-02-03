@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { mkdir } from "fs/promises";
+import path from "path";
 import {
   getAllowWrites,
   hasWritePermissions,
@@ -40,6 +42,22 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, error: "Session name and location are required." },
       { status: 400 }
+    );
+  }
+
+  try {
+    const normalizedLocation = path.resolve(body.session.location);
+    await mkdir(normalizedLocation, { recursive: true });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? `Unable to create session folder: ${error.message}`
+            : "Unable to create session folder.",
+      },
+      { status: 500 }
     );
   }
 
