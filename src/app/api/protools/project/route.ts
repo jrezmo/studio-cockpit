@@ -296,76 +296,97 @@ export async function POST(request: Request) {
     const audioDir = path.join(sessionDir, resolvedSessionName, "Audio Files");
     await mkdir(audioDir, { recursive: true });
     const sourcePaths = audioFiles.map((file) => file.path);
-    const stagedPaths: string[] = [];
-    const failedCopies: Array<{ source: string; error: string }> = [];
-    for (const file of audioFiles) {
-      const baseName = path.basename(file.path);
-      const destination = path.join(audioDir, baseName);
-      try {
-        await copyFile(file.path, destination);
-        stagedPaths.push(destination);
-      } catch (error) {
-        failedCopies.push({
-          source: file.path,
-          error: error instanceof Error ? error.message : "Copy failed.",
-        });
-      }
-    }
-
-    if (failedCopies.length > 0) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Unable to stage audio files into the session folder.",
-          debug: {
-            sourcePaths,
-            destinationPath: audioDir,
-            failedCopies,
-          },
-          result: {
-            session: sessionResult.result,
-            tracks: createdTracks,
-          },
-        },
-        { status: 500 }
-      );
-    }
-
-    const importResult = await importAudioToClipList(
-      stagedPaths,
-      "",
-      "AOperations_AddAudio"
+    let importResult = await importAudioToClipList(
+      sourcePaths,
+      audioDir,
+      "AOperations_ConvertAudio"
     );
+    let usedPaths = sourcePaths;
+    let fallbackDebug: Record<string, unknown> | null = null;
+
     if (!importResult.ok) {
-      const failureList = (importResult as { failureList?: string[] }).failureList;
-      const rawImport = (importResult as { raw?: unknown }).raw;
-      const missingRawNote =
-        rawImport == null
-          ? " PTSL returned no response body — rebuild MCP server."
-          : "";
-      const debug = {
-        sourcePaths,
-        stagedPaths,
-        destinationPath: audioDir,
-        failureList: failureList ?? [],
-        raw: rawImport ?? null,
-      };
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `${importResult.error || "Unable to import audio files."}${missingRawNote}`,
-          debug,
-          result: {
-            session: sessionResult.result,
-            tracks: createdTracks,
+      const stagedPaths: string[] = [];
+      const failedCopies: Array<{ source: string; error: string }> = [];
+      for (const file of audioFiles) {
+        const baseName = path.basename(file.path);
+        const destination = path.join(audioDir, baseName);
+        try {
+          await copyFile(file.path, destination);
+          stagedPaths.push(destination);
+        } catch (error) {
+          failedCopies.push({
+            source: file.path,
+            error: error instanceof Error ? error.message : "Copy failed.",
+          });
+        }
+      }
+
+      if (failedCopies.length > 0) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "Unable to stage audio files into the session folder.",
+            debug: {
+              sourcePaths,
+              destinationPath: audioDir,
+              failedCopies,
+            },
+            result: {
+              session: sessionResult.result,
+              tracks: createdTracks,
+            },
           },
-        },
-        { status: 500 }
+          { status: 500 }
+        );
+      }
+
+      const fallbackResult = await importAudioToClipList(
+        stagedPaths,
+        "",
+        "AOperations_AddAudio"
       );
+      fallbackDebug = {
+        attempt: "add_audio_from_session_folder",
+        stagedPaths,
+        failureList: (fallbackResult as { failureList?: string[] }).failureList ?? [],
+        raw: (fallbackResult as { raw?: unknown }).raw ?? null,
+      };
+
+      if (!fallbackResult.ok) {
+        const failureList = (importResult as { failureList?: string[] }).failureList;
+        const rawImport = (importResult as { raw?: unknown }).raw;
+        const missingRawNote =
+          rawImport == null
+            ? " PTSL returned no response body — rebuild MCP server."
+            : "";
+        const debug = {
+          attempt: "convert_audio_to_session_folder",
+          sourcePaths,
+          destinationPath: audioDir,
+          failureList: failureList ?? [],
+          raw: rawImport ?? null,
+          fallback: fallbackDebug,
+        };
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `${importResult.error || "Unable to import audio files."}${missingRawNote}`,
+            debug,
+            result: {
+              session: sessionResult.result,
+              tracks: createdTracks,
+            },
+          },
+          { status: 500 }
+        );
+      }
+
+      importResult = fallbackResult;
+      usedPaths = stagedPaths;
     }
 
     const nameMap = new Map<string, string>();
-    stagedPaths.forEach((filePath, index) => {
+    usedPaths.forEach((filePath, index) => {
       const base = derivedTrackNames[index] || "Audio";
       nameMap.set(filePath, trackNames[index] || base);
     });
