@@ -37,14 +37,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const savedFiles: Array<{ name: string; path: string }> = [];
+  const savedFiles: Array<{ name: string; originalName: string; path: string }> = [];
 
   for (const file of files) {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const safeName = file.name.replace(/\s+/g, " ").trim() || `file-${Date.now()}`;
+    const safeName =
+      file.name
+        .replace(/[^\w.\- ]+/g, "_")
+        .replace(/\s+/g, " ")
+        .trim() || `file-${Date.now()}`;
     const targetPath = path.join(batchDir, safeName);
     await writeFile(targetPath, buffer);
-    savedFiles.push({ name: safeName, path: targetPath });
+    savedFiles.push({ name: safeName, originalName: file.name, path: targetPath });
   }
 
   return NextResponse.json({ ok: true, files: savedFiles }, { status: 200 });

@@ -27,7 +27,7 @@ type ProjectRequest = {
     format: string;
     timebase: string;
   };
-  audioFiles?: Array<{ name: string; path: string }>;
+  audioFiles?: Array<{ name: string; originalName?: string; path: string }>;
 };
 
 export async function POST(request: Request) {
@@ -113,9 +113,10 @@ export async function POST(request: Request) {
   const renamedSession = resolvedSessionName !== body.session.name;
 
   const allowWrites = getAllowWrites();
-  const derivedTrackNames = audioFiles.map((file) =>
-    file.name.replace(/\.[^/.]+$/, "").trim()
-  );
+  const derivedTrackNames = audioFiles.map((file) => {
+    const source = file.originalName || file.name;
+    return source.replace(/\.[^/.]+$/, "").trim();
+  });
   const trackNameCounts = new Map<string, number>();
   const uniqueTrackNames = derivedTrackNames.map((name) => {
     const base = name || "Audio";
@@ -245,6 +246,10 @@ export async function POST(request: Request) {
     if (!importResult.ok) {
       const failureList = (importResult as { failureList?: string[] }).failureList;
       const rawImport = (importResult as { raw?: unknown }).raw;
+      const missingRawNote =
+        rawImport == null
+          ? " PTSL returned no response body — rebuild MCP server."
+          : "";
       const debug = {
         sourcePaths,
         destinationPath: audioDir,
@@ -254,7 +259,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: importResult.error || "Unable to import audio files.",
+          error: `${importResult.error || "Unable to import audio files."}${missingRawNote}`,
           debug,
           result: {
             session: sessionResult.result,

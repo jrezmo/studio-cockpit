@@ -226,7 +226,7 @@ export function IngestPanel() {
     setPrepMessage("");
     setPrepDebug("");
 
-    let uploadedFiles: Array<{ name: string; path: string }> = [];
+    let uploadedFiles: Array<{ name: string; originalName?: string; path: string }> = [];
     if (webSelectedFiles.length > 0) {
       setUploadState("uploading");
       try {
@@ -240,7 +240,7 @@ export function IngestPanel() {
         });
         const uploadResult = (await uploadResponse.json()) as {
           ok: boolean;
-          files?: Array<{ name: string; path: string }>;
+          files?: Array<{ name: string; originalName?: string; path: string }>;
           error?: string;
         };
         if (!uploadResult.ok || !uploadResult.files) {

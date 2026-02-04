@@ -64,7 +64,12 @@ describe("IngestPanel", () => {
       }
       if (url.includes("/api/session-prep/upload")) {
         return Promise.resolve({
-          json: async () => ({ ok: true, files: [{ name: "Kick.wav", path: "/tmp/Kick.wav" }] }),
+          json: async () => ({
+            ok: true,
+            files: [
+              { name: "Kick.wav", originalName: "Kick.wav", path: "/tmp/Kick.wav" },
+            ],
+          }),
         });
       }
       if (url.includes("/api/session-prep/attach")) {
@@ -99,7 +104,12 @@ describe("IngestPanel", () => {
       }
       if (url.includes("/api/session-prep/upload")) {
         return Promise.resolve({
-          json: async () => ({ ok: true, files: [{ name: "Kick.wav", path: "/tmp/Kick.wav" }] }),
+          json: async () => ({
+            ok: true,
+            files: [
+              { name: "Kick.wav", originalName: "Kick.wav", path: "/tmp/Kick.wav" },
+            ],
+          }),
         });
       }
       if (url.includes("/api/session-prep/attach")) {
@@ -155,7 +165,12 @@ describe("IngestPanel", () => {
       }
       if (url.includes("/api/session-prep/upload")) {
         return Promise.resolve({
-          json: async () => ({ ok: true, files: [{ name: "Snare.wav", path: "/tmp/Snare.wav" }] }),
+          json: async () => ({
+            ok: true,
+            files: [
+              { name: "Snare.wav", originalName: "Snare.wav", path: "/tmp/Snare.wav" },
+            ],
+          }),
         });
       }
       if (url.includes("/api/protools/project")) {
