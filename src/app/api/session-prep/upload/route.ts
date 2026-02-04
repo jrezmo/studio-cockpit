@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { getUploadRoot } from "@/server/session-prep/config";
 
 export const runtime = "nodejs";
-
-const DEFAULT_UPLOAD_ROOT = "/Users/rezmo/dev/cockpitfiles/out/uploads";
-
-function getUploadRoot() {
-  return process.env.SESSION_PREP_UPLOAD_ROOT || DEFAULT_UPLOAD_ROOT;
-}
 
 export async function POST(request: Request) {
   let formData: FormData;

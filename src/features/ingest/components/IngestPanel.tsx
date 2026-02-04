@@ -73,6 +73,7 @@ export function IngestPanel() {
   );
   const [prepMessage, setPrepMessage] = useState("");
   const [uploadState, setUploadState] = useState<"idle" | "uploading">("idle");
+  const [uploadRoot, setUploadRoot] = useState("");
 
   const { supportsDialog, pickPath } = usePathDialog();
 
@@ -115,6 +116,20 @@ export function IngestPanel() {
       setSelectedSessionId(sortedSessions[0]?.id ?? "");
     }
   }, [selectedSessionId, sortedSessions]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    fetch("/api/session-prep/config")
+      .then((res) => res.json())
+      .then((data: { ok: boolean; uploadRoot?: string }) => {
+        if (data.ok && data.uploadRoot) {
+          setUploadRoot(data.uploadRoot);
+        }
+      })
+      .catch(() => {
+        // ignore config fetch errors
+      });
+  }, []);
 
   useEffect(() => {
     if (!selectedClientId) {
@@ -408,6 +423,11 @@ export function IngestPanel() {
             showFilePreview
           />
         )}
+        {uploadRoot ? (
+          <p className="text-[10px] text-muted-foreground font-mono">
+            Uploads to: {uploadRoot}
+          </p>
+        ) : null}
       </div>
 
       <div className="rounded-lg border border-border bg-card p-5 space-y-4">

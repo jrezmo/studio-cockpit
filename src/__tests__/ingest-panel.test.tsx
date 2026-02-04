@@ -50,9 +50,14 @@ describe("IngestPanel", () => {
     setStoreDefaults();
   });
 
-  it("renders the browser folder picker when not running in Tauri", () => {
+  it("renders the browser folder picker when not running in Tauri", async () => {
     mockFetch.mockImplementation((input: RequestInfo) => {
       const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/session-prep/config")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true, uploadRoot: "/tmp/uploads" }),
+        });
+      }
       if (url.includes("/api/session-prep/upload")) {
         return Promise.resolve({
           json: async () => ({ ok: true, files: [{ name: "Kick.wav", path: "/tmp/Kick.wav" }] }),
@@ -73,11 +78,17 @@ describe("IngestPanel", () => {
     expect(screen.getByText("Source Folder (Browser)")).toBeInTheDocument();
     expect(screen.getByText("Choose Folder")).toBeInTheDocument();
     expect(screen.queryByText("Browse")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Uploads to: /tmp/uploads")).toBeInTheDocument());
   });
 
   it("queues prep from a browser-selected folder", async () => {
     mockFetch.mockImplementation((input: RequestInfo) => {
       const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/session-prep/config")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true, uploadRoot: "/tmp/uploads" }),
+        });
+      }
       if (url.includes("/api/session-prep/upload")) {
         return Promise.resolve({
           json: async () => ({ ok: true, files: [{ name: "Kick.wav", path: "/tmp/Kick.wav" }] }),
@@ -94,6 +105,7 @@ describe("IngestPanel", () => {
     });
 
     render(<IngestPanel />);
+    await waitFor(() => expect(screen.getByText("Uploads to: /tmp/uploads")).toBeInTheDocument());
 
     const sessionSelect = screen.getByLabelText("Existing Session") as HTMLSelectElement;
     await waitFor(() => expect(sessionSelect.options.length).toBeGreaterThan(0));
@@ -124,6 +136,11 @@ describe("IngestPanel", () => {
   it("creates a new session and queues prep", async () => {
     mockFetch.mockImplementation((input: RequestInfo) => {
       const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/session-prep/config")) {
+        return Promise.resolve({
+          json: async () => ({ ok: true, uploadRoot: "/tmp/uploads" }),
+        });
+      }
       if (url.includes("/api/session-prep/upload")) {
         return Promise.resolve({
           json: async () => ({ ok: true, files: [{ name: "Snare.wav", path: "/tmp/Snare.wav" }] }),
@@ -140,6 +157,7 @@ describe("IngestPanel", () => {
     });
 
     render(<IngestPanel />);
+    await waitFor(() => expect(screen.getByText("Uploads to: /tmp/uploads")).toBeInTheDocument());
 
     await userEvent.click(screen.getByText("Create New Session"));
 
