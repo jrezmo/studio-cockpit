@@ -10,6 +10,7 @@ const protoPath = new URL(
 const sharedEnv = {
   ...process.env,
   PTSL_PROTO_PATH: process.env.PTSL_PROTO_PATH ?? protoPath,
+  PROTOOLS_ALLOW_WRITES: process.env.PROTOOLS_ALLOW_WRITES ?? "all",
 };
 
 const children = [
