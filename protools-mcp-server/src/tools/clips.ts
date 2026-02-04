@@ -238,8 +238,14 @@ async function importAudioToClipList(client: PTSLClient, args: any) {
       const errorData = JSON.parse(errorJson);
       const errorMessages = errorData.errors?.map((e: any) => e.command_error_message).join(', ') || 'Unknown error';
       return {
-        content: [{ type: 'text', text: `Failed to import audio: ${errorMessages}` }],
+        content: [
+          {
+            type: 'text',
+            text: `Failed to import audio: ${errorMessages}\nError JSON: ${errorJson}`,
+          },
+        ],
         isError: true,
+        response,
       };
     }
 
