@@ -218,7 +218,7 @@ export async function POST(request: Request) {
   let stagedFilesCount = 0;
   if (audioFiles.length > 0) {
     const sessionDir = path.resolve(body.session.location);
-    const audioDir = path.join(sessionDir, "Audio Files");
+    const audioDir = path.join(sessionDir, resolvedSessionName, "Audio Files");
     try {
       await mkdir(audioDir, { recursive: true });
       for (const file of audioFiles) {
