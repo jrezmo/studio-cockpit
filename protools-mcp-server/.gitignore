@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+
+# Editor directories
+.vscode/
+.idea/
+
+# MacOS
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# PTSL SDK (closed source, for reference only)
+ptsl_sdk/
+
+# Config files (user-specific)
+.protools-mcp/
+
+# SSL certificates (self-signed for local dev)
+certs/
+
+# Test files and development artifacts
+claude-tests/
+.claude/
+.gemini/
+
+# Development plans
+PLAN.md
