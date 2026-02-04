@@ -175,6 +175,11 @@ describe("IngestPanel", () => {
 
     const nameInput = screen.getByLabelText("New Session Name") as HTMLInputElement;
     await userEvent.type(nameInput, "Session Prep Test");
+    await userEvent.click(
+      screen.getByText(
+        "Close current session without saving before creating a new one."
+      )
+    );
 
     const file = new File(["test"], "Snare.wav", { type: "audio/wav" });
     Object.defineProperty(file, "webkitRelativePath", {

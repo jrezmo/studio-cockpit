@@ -19,6 +19,7 @@ type ProjectRequest = {
     ioSettings: string;
     interleaved: boolean;
   };
+  forceCloseSession?: boolean;
   tracks: {
     names: string[];
     type: string;
@@ -123,6 +124,23 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     );
+  }
+
+  if (body.forceCloseSession) {
+    const closeResult = await runMcpTool(
+      "ptsl_command",
+      {
+        command: "CloseSession",
+        params: { save_on_close: false },
+      },
+      allowWrites
+    );
+    if (!closeResult.ok) {
+      return NextResponse.json(
+        { ok: false, error: closeResult.error || "Unable to close session." },
+        { status: 500 }
+      );
+    }
   }
 
   const sessionResult = await runMcpTool("ptsl_command", {

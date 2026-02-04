@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Badge } from "@/shared/ui/badge";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { Separator } from "@/shared/ui/separator";
 import { cn } from "@/shared/utils";
 import { PathPickerField } from "@/shared/ui/path-picker";
@@ -75,6 +76,7 @@ export function IngestPanel() {
   const [uploadState, setUploadState] = useState<"idle" | "uploading">("idle");
   const [uploadRoot, setUploadRoot] = useState("");
   const [createdSessionsRoot, setCreatedSessionsRoot] = useState("");
+  const [forceCloseSession, setForceCloseSession] = useState(false);
 
   const { supportsDialog, pickPath } = usePathDialog();
 
@@ -324,6 +326,7 @@ export function IngestPanel() {
             ioSettings: "IOSettings_Last",
             interleaved: true,
           },
+          forceCloseSession,
           tracks: {
             names: [],
             type: "TType_Audio",
@@ -548,6 +551,20 @@ export function IngestPanel() {
                 placeholder="Enter a session name"
                 className="text-sm"
               />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <Checkbox
+                  checked={forceCloseSession}
+                  onCheckedChange={(value) => setForceCloseSession(Boolean(value))}
+                />
+                <span>
+                  Close current session without saving before creating a new one.
+                </span>
+              </label>
+              <p className="text-[10px] text-muted-foreground">
+                Use this to bypass Pro Tools save prompts. Unsaved changes will be lost.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="client-link" className="text-xs">
