@@ -43,6 +43,20 @@ export async function importAudioToClipList(
       })
     : [];
 
+  const failureList = Array.isArray(responseBody?.failure_list)
+    ? responseBody.failure_list
+    : [];
+
+  if (failureList.length > 0 || imported.length === 0) {
+    return {
+      ok: false,
+      error: "No audio files were imported.",
+      clips: imported,
+      failureList,
+      raw: result.result,
+    };
+  }
+
   return { ok: true, clips: imported, raw: result.result };
 }
 

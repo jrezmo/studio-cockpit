@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mkdir } from "fs/promises";
+import { access, mkdir, readdir } from "fs/promises";
 import path from "path";
 import {
   getAllowWrites,
@@ -47,6 +47,46 @@ export async function POST(request: Request) {
     );
   }
 
+  async function resolveSessionName(location: string, name: string) {
+    const normalizedName = name.trim();
+    if (!normalizedName) return name;
+    const baseName = normalizedName.replace(/\.ptx$/i, "");
+    const sessionFile = `${baseName}.ptx`;
+    const sessionPath = path.join(location, sessionFile);
+
+    try {
+      await access(sessionPath);
+      // File exists, fall through to auto-unique below.
+    } catch {
+      return baseName;
+    }
+
+    let existingNames: Set<string> = new Set();
+    try {
+      const entries = await readdir(location);
+      existingNames = new Set(
+        entries
+          .filter((entry) => entry.toLowerCase().endsWith(".ptx"))
+          .map((entry) => entry.replace(/\.ptx$/i, "").toLowerCase())
+      );
+    } catch {
+      existingNames = new Set([baseName.toLowerCase()]);
+    }
+
+    if (!existingNames.has(baseName.toLowerCase())) {
+      return baseName;
+    }
+
+    for (let i = 2; i < 100; i += 1) {
+      const candidate = `${baseName}-${i}`;
+      if (!existingNames.has(candidate.toLowerCase())) {
+        return candidate;
+      }
+    }
+
+    return `${baseName}-${Date.now()}`;
+  }
+
   try {
     const normalizedLocation = path.resolve(body.session.location);
     await mkdir(normalizedLocation, { recursive: true });
@@ -64,6 +104,12 @@ export async function POST(request: Request) {
   }
 
   const audioFiles = body.audioFiles ?? [];
+
+  const resolvedSessionName = await resolveSessionName(
+    path.resolve(body.session.location),
+    body.session.name
+  );
+  const renamedSession = resolvedSessionName !== body.session.name;
 
   const allowWrites = getAllowWrites();
   const needsTracks = body.tracks?.names?.length > 0;
@@ -83,7 +129,7 @@ export async function POST(request: Request) {
   const sessionResult = await runMcpTool("ptsl_command", {
     command: "CreateSession",
     params: {
-      session_name: body.session.name,
+      session_name: resolvedSessionName,
       create_from_template: false,
       create_from_aaf: false,
       path_to_aaf: "",
@@ -155,10 +201,15 @@ export async function POST(request: Request) {
     );
 
     if (!importResult.ok) {
+      const failureList = (importResult as { failureList?: string[] }).failureList;
+      const failureNote =
+        failureList && failureList.length
+          ? ` Failures: ${failureList.join(", ")}`
+          : "";
       return NextResponse.json(
         {
           ok: false,
-          error: importResult.error || "Unable to import audio files.",
+          error: `${importResult.error || "Unable to import audio files."}${failureNote}`,
           result: {
             session: sessionResult.result,
             tracks: createdTracks,
@@ -214,6 +265,8 @@ export async function POST(request: Request) {
       ok: true,
       result: {
         session: sessionResult.result,
+        sessionNameUsed: resolvedSessionName,
+        sessionRenamed: renamedSession,
         tracks: createdTracks,
         audioFilesImported: importedClipsCount,
       },

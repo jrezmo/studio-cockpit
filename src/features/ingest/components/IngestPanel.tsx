@@ -313,12 +313,21 @@ export function IngestPanel() {
           audioFiles: uploadedFiles,
         }),
       });
-      const result = (await response.json()) as { ok: boolean; error?: string };
+      const result = (await response.json()) as {
+        ok: boolean;
+        error?: string;
+        result?: {
+          sessionNameUsed?: string;
+          sessionRenamed?: boolean;
+        };
+      };
       if (!result.ok) {
         throw new Error(result.error || "Failed to create session.");
       }
+      const sessionNameUsed =
+        result.result?.sessionNameUsed?.trim() || newSessionName.trim();
       setLastProToolsSessionCreated({
-        name: newSessionName.trim(),
+        name: sessionNameUsed,
         location: targetLocation,
         createdAt: new Date().toISOString(),
       });
@@ -326,8 +335,10 @@ export function IngestPanel() {
       setPrepState("ok");
       setPrepMessage(
         webSelectedFiles.length
-          ? `Session created and imported ${webSelectedFiles.length} file(s).`
-          : "Session created and prep queued."
+          ? `Session created${
+              result.result?.sessionRenamed ? ` as ${sessionNameUsed}` : ""
+            } and imported ${webSelectedFiles.length} file(s).`
+          : `Session created${result.result?.sessionRenamed ? ` as ${sessionNameUsed}` : ""}.`
       );
     } catch (error) {
       const message =
