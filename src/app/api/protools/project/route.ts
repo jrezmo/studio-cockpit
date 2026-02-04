@@ -6,6 +6,7 @@ import {
   hasWritePermissions,
   runMcpTool,
 } from "@/server/protools/mcp";
+import { importAudioToClipList, spotClipsByName } from "@/server/protools/import";
 
 export const runtime = "nodejs";
 
@@ -112,7 +113,22 @@ export async function POST(request: Request) {
   const renamedSession = resolvedSessionName !== body.session.name;
 
   const allowWrites = getAllowWrites();
-  const needsTracks = body.tracks?.names?.length > 0;
+  const derivedTrackNames = audioFiles.map((file) =>
+    file.name.replace(/\.[^/.]+$/, "").trim()
+  );
+  const trackNameCounts = new Map<string, number>();
+  const uniqueTrackNames = derivedTrackNames.map((name) => {
+    const base = name || "Audio";
+    const count = (trackNameCounts.get(base) ?? 0) + 1;
+    trackNameCounts.set(base, count);
+    return count > 1 ? `${base}-${count}` : base;
+  });
+
+  const trackNames = body.tracks?.names?.length
+    ? body.tracks.names
+    : uniqueTrackNames;
+
+  const needsTracks = trackNames.length > 0;
   const requiredGroups = needsTracks ? ["session", "track_structure"] : ["session"];
 
   if (!hasWritePermissions(allowWrites, requiredGroups)) {
@@ -166,7 +182,7 @@ export async function POST(request: Request) {
 
   const createdTracks: Array<{ name: string; result: unknown; trackIds: string[] }> = [];
   if (needsTracks) {
-    for (const name of body.tracks.names) {
+    for (const name of trackNames) {
       if (!name) continue;
       const trackResult = await runMcpTool(
         "ptsl_command",
@@ -241,6 +257,64 @@ export async function POST(request: Request) {
         },
         { status: 500 }
       );
+    }
+
+    const stagedPaths = audioFiles.map((file) =>
+      path.join(audioDir, file.name)
+    );
+    const importResult = await importAudioToClipList(
+      stagedPaths,
+      audioDir,
+      "AOperations_CopyAudio"
+    );
+    if (!importResult.ok) {
+      const failureList = (importResult as { failureList?: string[] }).failureList;
+      const rawImport = (importResult as { raw?: unknown }).raw;
+      const failureNote =
+        failureList && failureList.length
+          ? ` Failures: ${failureList.join(", ")}`
+          : "";
+      const rawNote = rawImport ? ` Raw: ${JSON.stringify(rawImport)}` : "";
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `${importResult.error || "Unable to import audio files."}${failureNote}${rawNote}`,
+          result: {
+            session: sessionResult.result,
+            tracks: createdTracks,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    const nameMap = new Map<string, string>();
+    stagedPaths.forEach((filePath, index) => {
+      const base = derivedTrackNames[index] || "Audio";
+      nameMap.set(filePath, trackNames[index] || base);
+    });
+
+    for (const clip of importResult.clips) {
+      const trackName = nameMap.get(clip.originalPath);
+      if (!trackName || clip.clipIds.length === 0) continue;
+      const spotResult = await spotClipsByName(clip.clipIds, trackName, {
+        location: "0",
+        timeType: "TLType_Samples",
+        locationType: "SLType_Start",
+      });
+      if (!spotResult.ok) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: spotResult.error || "Unable to spot clips onto tracks.",
+            result: {
+              session: sessionResult.result,
+              tracks: createdTracks,
+            },
+          },
+          { status: 500 }
+        );
+      }
     }
   }
 
