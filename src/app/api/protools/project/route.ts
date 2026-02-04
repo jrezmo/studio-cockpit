@@ -87,25 +87,6 @@ async function resolveSessionName(location: string, name: string) {
   return `${baseName}-${Date.now()}`;
 }
 
-async function resolveSessionPath(location: string, name: string) {
-  const sessionFile = `${name}.ptx`;
-  const directPath = path.join(location, sessionFile);
-  try {
-    await access(directPath);
-    return directPath;
-  } catch {
-    // fall through
-  }
-
-  const nestedPath = path.join(location, name, sessionFile);
-  try {
-    await access(nestedPath);
-    return nestedPath;
-  } catch {
-    return directPath;
-  }
-}
-
 function buildTrackNames(
   audioFiles: Array<{ name: string; originalName?: string }>,
   requestedNames: string[] | undefined
@@ -134,42 +115,6 @@ async function buildTrackFormats(
       return mapChannelsToTrackFormat(channels, fallbackFormat);
     })
   );
-}
-
-async function closeAndReopenSession(
-  allowWrites: string,
-  location: string,
-  sessionName: string
-) {
-  const sessionPath = await resolveSessionPath(location, sessionName);
-  const closeResult = await runMcpTool(
-    "ptsl_command",
-    {
-      command: "CloseSession",
-      params: { save_on_close: false },
-    },
-    allowWrites
-  );
-  if (!closeResult.ok) {
-    return { ok: false, error: closeResult.error || "Unable to close session." };
-  }
-
-  const openResult = await runMcpTool(
-    "ptsl_command",
-    {
-      command: "OpenSession",
-      params: {
-        session_path: sessionPath,
-        behavior_options: {},
-      },
-    },
-    allowWrites
-  );
-  if (!openResult.ok) {
-    return { ok: false, error: openResult.error || "Unable to open session." };
-  }
-
-  return { ok: true };
 }
 
 async function importAudioWithFallback(
@@ -390,20 +335,6 @@ export async function POST(request: Request) {
       { ok: false, error: saveResult.error || "Unable to save session." },
       { status: 500 }
     );
-  }
-
-  if (audioFiles.length > 0) {
-    const reopenResult = await closeAndReopenSession(
-      allowWrites,
-      path.resolve(body.session.location),
-      resolvedSessionName
-    );
-    if (!reopenResult.ok) {
-      return NextResponse.json(
-        { ok: false, error: reopenResult.error || "Unable to reopen session." },
-        { status: 500 }
-      );
-    }
   }
 
   let importedFilesCount = 0;
