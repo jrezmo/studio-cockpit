@@ -55,7 +55,11 @@ describe("IngestPanel", () => {
       const url = typeof input === "string" ? input : input.url;
       if (url.includes("/api/session-prep/config")) {
         return Promise.resolve({
-          json: async () => ({ ok: true, uploadRoot: "/tmp/uploads" }),
+          json: async () => ({
+            ok: true,
+            uploadRoot: "/tmp/uploads",
+            createdSessionsRoot: "/tmp/createdsessions",
+          }),
         });
       }
       if (url.includes("/api/session-prep/upload")) {
@@ -86,7 +90,11 @@ describe("IngestPanel", () => {
       const url = typeof input === "string" ? input : input.url;
       if (url.includes("/api/session-prep/config")) {
         return Promise.resolve({
-          json: async () => ({ ok: true, uploadRoot: "/tmp/uploads" }),
+          json: async () => ({
+            ok: true,
+            uploadRoot: "/tmp/uploads",
+            createdSessionsRoot: "/tmp/createdsessions",
+          }),
         });
       }
       if (url.includes("/api/session-prep/upload")) {
@@ -138,7 +146,11 @@ describe("IngestPanel", () => {
       const url = typeof input === "string" ? input : input.url;
       if (url.includes("/api/session-prep/config")) {
         return Promise.resolve({
-          json: async () => ({ ok: true, uploadRoot: "/tmp/uploads" }),
+          json: async () => ({
+            ok: true,
+            uploadRoot: "/tmp/uploads",
+            createdSessionsRoot: "/tmp/createdsessions",
+          }),
         });
       }
       if (url.includes("/api/session-prep/upload")) {
@@ -175,7 +187,7 @@ describe("IngestPanel", () => {
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     expect(
-      await screen.findByText("Session created and imported 1 file(s).")
+      await screen.findByText("Session created and files staged (1).")
     ).toBeInTheDocument();
 
     const { lastProToolsSessionCreated } = useStudioStore.getState();

@@ -74,6 +74,7 @@ export function IngestPanel() {
   const [prepMessage, setPrepMessage] = useState("");
   const [uploadState, setUploadState] = useState<"idle" | "uploading">("idle");
   const [uploadRoot, setUploadRoot] = useState("");
+  const [createdSessionsRoot, setCreatedSessionsRoot] = useState("");
 
   const { supportsDialog, pickPath } = usePathDialog();
 
@@ -121,11 +122,20 @@ export function IngestPanel() {
     if (typeof window === "undefined") return;
     fetch("/api/session-prep/config")
       .then((res) => res.json())
-      .then((data: { ok: boolean; uploadRoot?: string }) => {
-        if (data.ok && data.uploadRoot) {
-          setUploadRoot(data.uploadRoot);
+      .then(
+        (data: {
+          ok: boolean;
+          uploadRoot?: string;
+          createdSessionsRoot?: string;
+        }) => {
+          if (data.ok && data.uploadRoot) {
+            setUploadRoot(data.uploadRoot);
+          }
+          if (data.ok && data.createdSessionsRoot) {
+            setCreatedSessionsRoot(data.createdSessionsRoot);
+          }
         }
-      })
+      )
       .catch(() => {
         // ignore config fetch errors
       });
@@ -172,11 +182,10 @@ export function IngestPanel() {
     if (prepMode === "existing" && activeSession?.path) {
       return activeSession.path;
     }
-    const clientName = activeClient?.name || "Unassigned Client";
-    const projectName = activeProject?.name;
-    const base = settings.artistFoldersPath || "/Volumes/Studio/Artists";
-    const projectFolder = projectName ? `/${projectName}` : "";
-    return `${base}/${clientName}${projectFolder}/Sessions`;
+    return (
+      createdSessionsRoot ||
+      "/Users/rezmo/dev/cockpitfiles/createdsessions"
+    );
   }
 
   function addPrepRecord(
@@ -302,10 +311,6 @@ export function IngestPanel() {
 
     const targetLocation = buildSessionLocation();
     try {
-      const trackNames =
-        uploadedFiles.length > 0
-          ? uploadedFiles.map((file) => file.name.replace(/\.[^/.]+$/, ""))
-          : [];
       const response = await fetch("/api/protools/project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -320,7 +325,7 @@ export function IngestPanel() {
             interleaved: true,
           },
           tracks: {
-            names: trackNames,
+            names: [],
             type: "TType_Audio",
             format: "TFormat_Stereo",
             timebase: "TTimebase_Samples",
@@ -352,7 +357,7 @@ export function IngestPanel() {
         webSelectedFiles.length
           ? `Session created${
               result.result?.sessionRenamed ? ` as ${sessionNameUsed}` : ""
-            } and imported ${webSelectedFiles.length} file(s).`
+            } and files staged (${webSelectedFiles.length}).`
           : `Session created${result.result?.sessionRenamed ? ` as ${sessionNameUsed}` : ""}.`
       );
     } catch (error) {
@@ -426,6 +431,11 @@ export function IngestPanel() {
         {uploadRoot ? (
           <p className="text-[10px] text-muted-foreground font-mono">
             Uploads to: {uploadRoot}
+          </p>
+        ) : null}
+        {createdSessionsRoot ? (
+          <p className="text-[10px] text-muted-foreground font-mono">
+            Sessions in: {createdSessionsRoot}
           </p>
         ) : null}
       </div>

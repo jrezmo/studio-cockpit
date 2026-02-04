@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { access, mkdir, readdir } from "fs/promises";
+import { access, mkdir, readdir, copyFile } from "fs/promises";
 import path from "path";
 import {
   getAllowWrites,
   hasWritePermissions,
   runMcpTool,
 } from "@/server/protools/mcp";
-import { importAudioToClipList, spotClipsById } from "@/server/protools/import";
 
 export const runtime = "nodejs";
 
@@ -190,28 +189,33 @@ export async function POST(request: Request) {
     }
   }
 
-  let importedClipsCount = 0;
+  const saveResult = await runMcpTool("save_session", {}, allowWrites);
+  if (!saveResult.ok) {
+    return NextResponse.json(
+      { ok: false, error: saveResult.error || "Unable to save session." },
+      { status: 500 }
+    );
+  }
+
+  let stagedFilesCount = 0;
   if (audioFiles.length > 0) {
     const sessionDir = path.resolve(body.session.location);
     const audioDir = path.join(sessionDir, "Audio Files");
-    const importResult = await importAudioToClipList(
-      audioFiles.map((file) => file.path),
-      audioDir,
-      "AOperations_CopyAudio"
-    );
-
-    if (!importResult.ok) {
-      const failureList = (importResult as { failureList?: string[] }).failureList;
-      const rawImport = (importResult as { raw?: unknown }).raw;
-      const failureNote =
-        failureList && failureList.length
-          ? ` Failures: ${failureList.join(", ")}`
-          : "";
-      const rawNote = rawImport ? ` Raw: ${JSON.stringify(rawImport)}` : "";
+    try {
+      await mkdir(audioDir, { recursive: true });
+      for (const file of audioFiles) {
+        const targetPath = path.join(audioDir, file.name);
+        await copyFile(file.path, targetPath);
+        stagedFilesCount += 1;
+      }
+    } catch (error) {
       return NextResponse.json(
         {
           ok: false,
-          error: `${importResult.error || "Unable to import audio files."}${failureNote}${rawNote}`,
+          error:
+            error instanceof Error
+              ? `Unable to stage audio files: ${error.message}`
+              : "Unable to stage audio files.",
           result: {
             session: sessionResult.result,
             tracks: createdTracks,
@@ -219,46 +223,6 @@ export async function POST(request: Request) {
         },
         { status: 500 }
       );
-    }
-
-    importedClipsCount = importResult.clips.reduce(
-      (total, clip) => total + clip.clipIds.length,
-      0
-    );
-
-    const trackIdByName = new Map<string, string>();
-    createdTracks.forEach((track) => {
-      if (track.trackIds[0]) {
-        trackIdByName.set(track.name, track.trackIds[0]);
-      }
-    });
-
-    for (const clip of importResult.clips) {
-      const fileName = clip.originalPath.split(/[\\/]/).pop() ?? clip.originalPath;
-      const trackName = fileName.replace(/\.[^/.]+$/, "");
-      const trackId = trackIdByName.get(trackName);
-      if (!trackId || clip.clipIds.length === 0) continue;
-
-      const spotResult = await spotClipsById(clip.clipIds, {
-        trackId,
-        location: "0",
-        timeType: "TLType_Samples",
-        locationType: "SLType_Start",
-      });
-
-      if (!spotResult.ok) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error: spotResult.error || "Unable to spot clips onto tracks.",
-            result: {
-              session: sessionResult.result,
-              tracks: createdTracks,
-            },
-          },
-          { status: 500 }
-        );
-      }
     }
   }
 
@@ -270,7 +234,7 @@ export async function POST(request: Request) {
         sessionNameUsed: resolvedSessionName,
         sessionRenamed: renamedSession,
         tracks: createdTracks,
-        audioFilesImported: importedClipsCount,
+        audioFilesStaged: stagedFilesCount,
       },
     },
     { status: 200 }
