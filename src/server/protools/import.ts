@@ -24,7 +24,12 @@ export async function importAudioToClipList(
   );
 
   if (!result.ok) {
-    return { ok: false, error: result.error || "Import failed.", clips: [] as ImportedClip[] };
+    return {
+      ok: false,
+      error: result.error || "Import failed.",
+      clips: [] as ImportedClip[],
+      raw: result.raw ?? null,
+    };
   }
 
   const responseBody =

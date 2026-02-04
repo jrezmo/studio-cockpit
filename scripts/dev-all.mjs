@@ -7,11 +7,17 @@ const protoPath = new URL(
   "../PTSL_SDK_CPP.2025.10.0.1232349/Source/PTSL.proto",
   import.meta.url
 ).pathname;
+const mcpDistPath = new URL(
+  "../protools-mcp-server/dist/index.js",
+  import.meta.url
+).pathname;
+
 const sharedEnv = {
   ...process.env,
   PTSL_PROTO_PATH: process.env.PTSL_PROTO_PATH ?? protoPath,
   PROTOOLS_ALLOW_WRITES: process.env.PROTOOLS_ALLOW_WRITES ?? "all",
   ALLOW_WRITES: process.env.ALLOW_WRITES ?? "all",
+  PROTOOLS_MCP_PATH: process.env.PROTOOLS_MCP_PATH ?? mcpDistPath,
 };
 
 if (!process.env.SKIP_SQLITE_REBUILD) {
@@ -30,7 +36,7 @@ const children = [
     stdio: "inherit",
     env: sharedEnv,
   }),
-  spawn(npmCommand, ["run", "dev:watch"], {
+  spawn(npmCommand, ["run", "build:watch"], {
     cwd: new URL("../protools-mcp-server", import.meta.url).pathname,
     stdio: "inherit",
     env: sharedEnv,
