@@ -88,6 +88,25 @@ export async function POST(request: Request) {
     return `${baseName}-${Date.now()}`;
   }
 
+  async function resolveSessionPath(location: string, name: string) {
+    const sessionFile = `${name}.ptx`;
+    const directPath = path.join(location, sessionFile);
+    try {
+      await access(directPath);
+      return directPath;
+    } catch {
+      // fall through
+    }
+
+    const nestedPath = path.join(location, name, sessionFile);
+    try {
+      await access(nestedPath);
+      return nestedPath;
+    } catch {
+      return directPath;
+    }
+  }
+
   try {
     const normalizedLocation = path.resolve(body.session.location);
     await mkdir(normalizedLocation, { recursive: true });
@@ -230,6 +249,45 @@ export async function POST(request: Request) {
       { ok: false, error: saveResult.error || "Unable to save session." },
       { status: 500 }
     );
+  }
+
+  if (audioFiles.length > 0) {
+    const sessionPath = await resolveSessionPath(
+      path.resolve(body.session.location),
+      resolvedSessionName
+    );
+    const closeResult = await runMcpTool(
+      "ptsl_command",
+      {
+        command: "CloseSession",
+        params: { save_on_close: false },
+      },
+      allowWrites
+    );
+    if (!closeResult.ok) {
+      return NextResponse.json(
+        { ok: false, error: closeResult.error || "Unable to close session." },
+        { status: 500 }
+      );
+    }
+
+    const openResult = await runMcpTool(
+      "ptsl_command",
+      {
+        command: "OpenSession",
+        params: {
+          session_path: sessionPath,
+          behavior_options: {},
+        },
+      },
+      allowWrites
+    );
+    if (!openResult.ok) {
+      return NextResponse.json(
+        { ok: false, error: openResult.error || "Unable to open session." },
+        { status: 500 }
+      );
+    }
   }
 
   let importedFilesCount = 0;
