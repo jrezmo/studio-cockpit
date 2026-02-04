@@ -73,6 +73,7 @@ export function IngestPanel() {
     "idle"
   );
   const [prepMessage, setPrepMessage] = useState("");
+  const [prepDebug, setPrepDebug] = useState("");
   const [uploadState, setUploadState] = useState<"idle" | "uploading">("idle");
   const [uploadRoot, setUploadRoot] = useState("");
   const [createdSessionsRoot, setCreatedSessionsRoot] = useState("");
@@ -223,6 +224,7 @@ export function IngestPanel() {
 
     setPrepState("loading");
     setPrepMessage("");
+    setPrepDebug("");
 
     let uploadedFiles: Array<{ name: string; path: string }> = [];
     if (webSelectedFiles.length > 0) {
@@ -339,12 +341,16 @@ export function IngestPanel() {
       const result = (await response.json()) as {
         ok: boolean;
         error?: string;
+        debug?: unknown;
         result?: {
           sessionNameUsed?: string;
           sessionRenamed?: boolean;
         };
       };
       if (!result.ok) {
+        if (result.debug) {
+          setPrepDebug(JSON.stringify(result.debug, null, 2));
+        }
         throw new Error(result.error || "Failed to create session.");
       }
       const sessionNameUsed =
@@ -647,6 +653,16 @@ export function IngestPanel() {
           >
             {prepMessage}
           </p>
+        ) : null}
+        {prepDebug ? (
+          <div className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-[10px] text-muted-foreground">
+            <p className="mb-2 text-[10px] uppercase tracking-wide">
+              Import Debug
+            </p>
+            <pre className="whitespace-pre-wrap break-words font-mono">
+              {prepDebug}
+            </pre>
+          </div>
         ) : null}
         <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
           <div className="rounded-md border border-border bg-secondary/40 px-3 py-2">

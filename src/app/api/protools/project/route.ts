@@ -245,15 +245,17 @@ export async function POST(request: Request) {
     if (!importResult.ok) {
       const failureList = (importResult as { failureList?: string[] }).failureList;
       const rawImport = (importResult as { raw?: unknown }).raw;
-      const failureNote =
-        failureList && failureList.length
-          ? ` Failures: ${failureList.join(", ")}`
-          : "";
-      const rawNote = rawImport ? ` Raw: ${JSON.stringify(rawImport)}` : "";
+      const debug = {
+        sourcePaths,
+        destinationPath: audioDir,
+        failureList: failureList ?? [],
+        raw: rawImport ?? null,
+      };
       return NextResponse.json(
         {
           ok: false,
-          error: `${importResult.error || "Unable to import audio files."}${failureNote}${rawNote}`,
+          error: importResult.error || "Unable to import audio files.",
+          debug,
           result: {
             session: sessionResult.result,
             tracks: createdTracks,
