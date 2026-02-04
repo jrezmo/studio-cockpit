@@ -192,7 +192,7 @@ describe("IngestPanel", () => {
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     expect(
-      await screen.findByText("Session created and files staged (1).")
+      await screen.findByText("Session created and files imported (1).")
     ).toBeInTheDocument();
 
     const { lastProToolsSessionCreated } = useStudioStore.getState();

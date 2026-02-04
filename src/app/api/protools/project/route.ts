@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { access, mkdir, readdir, copyFile } from "fs/promises";
+import { access, mkdir, readdir } from "fs/promises";
 import path from "path";
 import {
   getAllowWrites,
@@ -231,39 +231,14 @@ export async function POST(request: Request) {
     );
   }
 
-  let stagedFilesCount = 0;
+  let importedFilesCount = 0;
   if (audioFiles.length > 0) {
     const sessionDir = path.resolve(body.session.location);
     const audioDir = path.join(sessionDir, resolvedSessionName, "Audio Files");
-    try {
-      await mkdir(audioDir, { recursive: true });
-      for (const file of audioFiles) {
-        const targetPath = path.join(audioDir, file.name);
-        await copyFile(file.path, targetPath);
-        stagedFilesCount += 1;
-      }
-    } catch (error) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            error instanceof Error
-              ? `Unable to stage audio files: ${error.message}`
-              : "Unable to stage audio files.",
-          result: {
-            session: sessionResult.result,
-            tracks: createdTracks,
-          },
-        },
-        { status: 500 }
-      );
-    }
-
-    const stagedPaths = audioFiles.map((file) =>
-      path.join(audioDir, file.name)
-    );
+    await mkdir(audioDir, { recursive: true });
+    const sourcePaths = audioFiles.map((file) => file.path);
     const importResult = await importAudioToClipList(
-      stagedPaths,
+      sourcePaths,
       audioDir,
       "AOperations_CopyAudio"
     );
@@ -289,7 +264,7 @@ export async function POST(request: Request) {
     }
 
     const nameMap = new Map<string, string>();
-    stagedPaths.forEach((filePath, index) => {
+    sourcePaths.forEach((filePath, index) => {
       const base = derivedTrackNames[index] || "Audio";
       nameMap.set(filePath, trackNames[index] || base);
     });
@@ -316,6 +291,7 @@ export async function POST(request: Request) {
         );
       }
     }
+    importedFilesCount = importResult.clips.length;
   }
 
   return NextResponse.json(
@@ -326,7 +302,7 @@ export async function POST(request: Request) {
         sessionNameUsed: resolvedSessionName,
         sessionRenamed: renamedSession,
         tracks: createdTracks,
-        audioFilesStaged: stagedFilesCount,
+        audioFilesImported: importedFilesCount,
       },
     },
     { status: 200 }

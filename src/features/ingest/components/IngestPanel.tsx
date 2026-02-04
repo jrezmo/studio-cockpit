@@ -360,7 +360,7 @@ export function IngestPanel() {
         webSelectedFiles.length
           ? `Session created${
               result.result?.sessionRenamed ? ` as ${sessionNameUsed}` : ""
-            } and files staged (${webSelectedFiles.length}).`
+            } and files imported (${webSelectedFiles.length}).`
           : `Session created${result.result?.sessionRenamed ? ` as ${sessionNameUsed}` : ""}.`
       );
     } catch (error) {
