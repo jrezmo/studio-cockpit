@@ -7,6 +7,7 @@ import {
   runMcpTool,
 } from "@/server/protools/mcp";
 import { importAudioToClipList, spotClipsByName } from "@/server/protools/import";
+import { getAudioChannelCount, mapChannelsToTrackFormat } from "@/server/session-prep/audio";
 
 export const runtime = "nodejs";
 
@@ -148,6 +149,13 @@ export async function POST(request: Request) {
     ? body.tracks.names
     : uniqueTrackNames;
 
+  const trackFormats = await Promise.all(
+    audioFiles.map(async (file) => {
+      const channels = await getAudioChannelCount(file.path);
+      return mapChannelsToTrackFormat(channels, body.tracks.format);
+    })
+  );
+
   const needsTracks = trackNames.length > 0;
   const requiredGroups = needsTracks ? ["session", "track_structure"] : ["session"];
 
@@ -202,8 +210,9 @@ export async function POST(request: Request) {
 
   const createdTracks: Array<{ name: string; result: unknown; trackIds: string[] }> = [];
   if (needsTracks) {
-    for (const name of trackNames) {
+    for (const [index, name] of trackNames.entries()) {
       if (!name) continue;
+      const trackFormat = trackFormats[index] || body.tracks.format;
       const trackResult = await runMcpTool(
         "ptsl_command",
         {
@@ -211,7 +220,7 @@ export async function POST(request: Request) {
           params: {
             number_of_tracks: 1,
             track_name: name,
-            track_format: body.tracks.format,
+            track_format: trackFormat,
             track_type: body.tracks.type,
             track_timebase: body.tracks.timebase,
           },
