@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { access, mkdir, readdir } from "fs/promises";
+import { access, mkdir, readdir, copyFile } from "fs/promises";
 import path from "path";
 import {
   getAllowWrites,
@@ -296,10 +296,45 @@ export async function POST(request: Request) {
     const audioDir = path.join(sessionDir, resolvedSessionName, "Audio Files");
     await mkdir(audioDir, { recursive: true });
     const sourcePaths = audioFiles.map((file) => file.path);
+    const stagedPaths: string[] = [];
+    const failedCopies: Array<{ source: string; error: string }> = [];
+    for (const file of audioFiles) {
+      const baseName = path.basename(file.path);
+      const destination = path.join(audioDir, baseName);
+      try {
+        await copyFile(file.path, destination);
+        stagedPaths.push(destination);
+      } catch (error) {
+        failedCopies.push({
+          source: file.path,
+          error: error instanceof Error ? error.message : "Copy failed.",
+        });
+      }
+    }
+
+    if (failedCopies.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Unable to stage audio files into the session folder.",
+          debug: {
+            sourcePaths,
+            destinationPath: audioDir,
+            failedCopies,
+          },
+          result: {
+            session: sessionResult.result,
+            tracks: createdTracks,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
     const importResult = await importAudioToClipList(
-      sourcePaths,
-      audioDir,
-      "AOperations_CopyAudio"
+      stagedPaths,
+      "",
+      "AOperations_AddAudio"
     );
     if (!importResult.ok) {
       const failureList = (importResult as { failureList?: string[] }).failureList;
@@ -310,6 +345,7 @@ export async function POST(request: Request) {
           : "";
       const debug = {
         sourcePaths,
+        stagedPaths,
         destinationPath: audioDir,
         failureList: failureList ?? [],
         raw: rawImport ?? null,
@@ -329,7 +365,7 @@ export async function POST(request: Request) {
     }
 
     const nameMap = new Map<string, string>();
-    sourcePaths.forEach((filePath, index) => {
+    stagedPaths.forEach((filePath, index) => {
       const base = derivedTrackNames[index] || "Audio";
       nameMap.set(filePath, trackNames[index] || base);
     });
