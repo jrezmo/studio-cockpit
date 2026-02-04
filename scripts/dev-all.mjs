@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -11,7 +11,18 @@ const sharedEnv = {
   ...process.env,
   PTSL_PROTO_PATH: process.env.PTSL_PROTO_PATH ?? protoPath,
   PROTOOLS_ALLOW_WRITES: process.env.PROTOOLS_ALLOW_WRITES ?? "all",
+  ALLOW_WRITES: process.env.ALLOW_WRITES ?? "all",
 };
+
+if (!process.env.SKIP_SQLITE_REBUILD) {
+  const rebuild = spawnSync(npmCommand, ["rebuild", "better-sqlite3"], {
+    cwd: repoRoot,
+    stdio: "inherit",
+  });
+  if (rebuild.status && rebuild.status !== 0) {
+    process.exit(rebuild.status);
+  }
+}
 
 const children = [
   spawn(npmCommand, ["run", "dev"], {
